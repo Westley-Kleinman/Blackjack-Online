@@ -575,7 +575,7 @@ body{background:radial-gradient(ellipse at 50% -10%,#235b48 0,#0b3027 42%,#06130
 
 /* Multiplayer is presented as a table first: compact betting spots, cards, and chips. */
 .multi-board{max-width:1180px;margin:0 auto}
-.multi-grid{padding-bottom:92px}
+.multi-grid{padding-bottom:132px}
 .multi-table{padding:24px 26px 18px;min-height:520px}
 .multi-table>.multi-dealer{padding-top:4px}
 .multi-dealer .table-label{font-family:Georgia,'Times New Roman',serif;letter-spacing:.24em;font-size:12px;color:#f3db9a;text-transform:uppercase}
@@ -622,11 +622,15 @@ body{background:radial-gradient(ellipse at 50% -10%,#235b48 0,#0b3027 42%,#06130
 .multi-side-guide{max-width:900px;margin:10px auto 0;border-top:1px solid #d7bb7166}
 .multi-table{overflow:visible}
 #multiControls{position:absolute;left:10%;right:10%;top:calc(100% + 12px);z-index:5;margin:0;padding:10px 14px;border:1px solid #9f8652;border-radius:18px;background:linear-gradient(145deg,#102f25f5,#071f18f5);box-shadow:0 10px 22px #020e0acc,inset 0 1px #fff8d61c}
+#multiControls{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;overflow:hidden}
+#multiControls .action{flex:1 1 0;min-width:0;padding:8px 6px;white-space:nowrap;font-size:12px}
+#multiControls kbd{font-size:9px}
 #multiYourSpot .multi-room-bar{position:absolute;left:10%;right:10%;top:calc(100% + 72px);z-index:5;margin:0;padding:0}
 .multi-room-bar #multiStart{order:-1}
 .chip-flight{position:fixed;z-index:1000;left:0;top:0;width:38px;height:38px;display:grid;place-items:center;border:3px dashed #f8e4a1;border-radius:50%;background:#a7524d;color:#fff;font-size:9px;font-weight:800;box-shadow:0 5px 10px #000b;pointer-events:none;animation:chip-fly .55s cubic-bezier(.2,.8,.25,1) forwards}
 @keyframes chip-fly{from{transform:translate(var(--from-x),var(--from-y)) scale(.65) rotate(-16deg);opacity:.2}to{transform:translate(var(--to-x),var(--to-y)) scale(1) rotate(8deg);opacity:1}}
-@media(max-width:760px){.multi-table{padding:18px 10px 14px}.multi-your-head .chip-bankroll{position:static;transform:none}.multi-side-spots{gap:6px}.multi-side-spot{width:58px;height:58px}.multi-side-spot small{font-size:5px}#multiControls,#multiYourSpot .multi-room-bar{left:2%;right:2%}}
+@media(min-width:761px){.multi-grid{padding-bottom:102px}}
+@media(max-width:760px){.multi-table{padding:18px 10px 14px}.multi-your-head .chip-bankroll{position:static;transform:none}.multi-side-spots{gap:6px}.multi-side-spot{width:58px;height:58px}.multi-side-spot small{font-size:5px}#multiControls,#multiYourSpot .multi-room-bar{left:2%;right:2%}#multiControls{gap:4px;padding:8px 6px}#multiControls .action{font-size:10px;padding:8px 2px}.multi-room-bar{gap:4px}.multi-room-bar .ghost,.multi-room-bar .action{min-width:0;font-size:10px;padding:7px 8px}}
 
 @media(prefers-reduced-motion:reduce){.card.dealt,.card.revealed{animation:none}
 }
@@ -1813,7 +1817,7 @@ const multiSideRecall={perfectPairs:5,twentyOneThree:5,luckyLucky:5};
 function multiplayerReady(){return /^https?:\/\//.test(MULTIPLAYER_ENDPOINT)}
 function multiplayerWsUrl(code){return MULTIPLAYER_ENDPOINT.replace(/^http/,'ws')+'/room/'+encodeURIComponent(code)}
 function multiSend(type,payload={}){if(multi.socket?.readyState===WebSocket.OPEN)multi.socket.send(JSON.stringify({type,...payload}))}
-function multiDisconnect(){if(multi.socket){multi.socket.close();multi.socket=null}multi.state=null;multi.legal=[];multi.selfId='';multi.code='';multi.dealtRound=-1;renderMulti()}
+function multiDisconnect(){if(multi.socket){multiSend('leave');multi.socket.close();multi.socket=null}multi.state=null;multi.legal=[];multi.selfId='';multi.code='';multi.dealtRound=-1;renderMulti()}
 function multiConnect(code,name,startingCash=1000){
   if(!multiplayerReady()){multi.error='Multiplayer server is not configured yet.';renderMulti();return}
   if(multi.socket)multi.socket.close();multi.code=String(code||'').trim().toUpperCase();multi.name=String(name||'Player').trim().slice(0,24)||'Player';multi.cash=Number.isFinite(Number(startingCash))?Math.max(1,Math.min(100000,Number(startingCash))):1000;multi.dealtRound=-1;
@@ -2399,6 +2403,7 @@ $('multiBetInput').addEventListener('keydown',event=>{if(event.key==='Enter')$('
 for(const id of SIDE_BET_IDS){const prefix=multiSideUI[id];$(prefix+'Toggle').addEventListener('click',()=>{const self=multi.state?.players.find(player=>player.id===multi.selfId),current=Number(self?.sideBets?.[id]||0);if(current>0){$(prefix+'Input').value=0;placeMultiSideWager(id)}else openMultiSideWager(id)});$(prefix+'Input').addEventListener('change',()=>placeMultiSideWager(id));$(prefix+'Input').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();placeMultiSideWager(id);event.target.blur()}})}
 $('multiStart').addEventListener('click',()=>multiSend('start'));
 $('multiLeave').addEventListener('click',multiDisconnect);
+if(typeof window.addEventListener==='function')window.addEventListener('pagehide',()=>{if(multi.socket?.readyState===WebSocket.OPEN)multiSend('leave')});
 $('multiCopy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(multi.code);$('multiStatus').textContent='Room code copied.'}catch{$('multiStatus').textContent='Room code: '+multi.code}});
 document.querySelectorAll('#multiControls button').forEach(button=>button.addEventListener('click',()=>multiSend('action',{action:button.dataset.multiAction})));
 $('multiRoomInput').addEventListener('keydown',event=>{if(event.key==='Enter')multiJoin()});$('multiName').addEventListener('keydown',event=>{if(event.key==='Enter')multiCreate()});

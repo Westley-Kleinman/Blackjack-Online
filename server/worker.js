@@ -214,18 +214,30 @@ export class BlackjackRoom {
       this.game.code = requestedCode;
       await this.persist();
     }
+    if (request.headers.get('x-reopen-room') === 'true') {
+      this.game = emptyState(this.game.code, request.headers.get('x-starting-cash'));
+      await this.persist();
+      return json({ ok: true, code: this.game.code, startingCash: this.game.startingCash });
+    }
     if (request.headers.get('Upgrade') !== 'websocket') return json({ ok: true, room: this.game.code });
     const pair = new WebSocketPair(); pair[1].accept();
     let playerId = crypto.randomUUID(); this.sockets.set(pair[1], playerId);
     pair[1].addEventListener('message', event => this.message(pair[1], playerId, event.data));
-    pair[1].addEventListener('close', () => { const player = this.game.players.find(item => item.id === playerId); if (player) { player.connected = false; if (this.game.hostId === playerId) this.game.hostId = this.game.players.find(item => item.connected)?.id || ''; if (this.game.phase === 'playing' && currentPlayer(this.game)?.id === playerId) { player.hands.forEach(hand => { hand.done = true; }); advanceTurn(this.game); if (this.game.phase === 'playing') this.game.message = `${currentPlayer(this.game).name}'s turn.`; } } this.sockets.delete(pair[1]); this.persist().then(() => this.broadcast()); });
+    pair[1].addEventListener('close', () => { const player = this.game.players.find(item => item.id === playerId); if (player) { player.connected = false; if (this.game.hostId === playerId) this.game.hostId = this.game.players.find(item => item.connected)?.id || ''; if (this.game.phase === 'playing' && currentPlayer(this.game)?.id === playerId) { player.hands.forEach(hand => { hand.done = true; }); advanceTurn(this.game); if (this.game.phase === 'playing') this.game.message = `${currentPlayer(this.game).name}'s turn.`; } } this.sockets.delete(pair[1]); this.persist().then(async () => { if (this.sockets.size === 0) await this.state.storage.setAlarm(Date.now() + 30000); this.broadcast(); }); });
     this.send(pair[1], playerId); return new Response(null, { status: 101, webSocket: pair[0] });
+  }
+  async alarm() {
+    await this.ready;
+    if (this.sockets.size > 0) return;
+    this.game = emptyState(this.game.code, this.game.startingCash);
+    await this.persist();
   }
   async message(socket, playerId, raw) {
     try {
       const event = JSON.parse(raw), type = event.type;
       if (type === 'join') {
         const name = String(event.name || 'Player').trim().slice(0, 24) || 'Player';
+        if (this.game.players.length > 0 && !this.game.players.some(item => item.connected)) this.game = emptyState(this.game.code, event.startingCash);
         let player = this.game.players.find(item => item.id === playerId);
         if (!player && this.game.players.length >= this.game.rules.maxPlayers) return socket.send(JSON.stringify({ type: 'error', message: 'This table is full.' }));
         if (!player) {
@@ -245,6 +257,7 @@ export class BlackjackRoom {
         else { player.sideBets[id] = Math.round(amount * 100) / 100; player.sideProfiles[id] = profile; this.game.message = `${player.name} updated their side bets.`; }
       } else if (type === 'start' && player.id === this.game.hostId && ['waiting', 'betting', 'settled'].includes(this.game.phase)) startRound(this.game);
       else if (type === 'action') handleAction(this.game, player, String(event.action));
+      else if (type === 'leave') { player.connected = false; if (this.game.hostId === playerId) this.game.hostId = this.game.players.find(item => item.connected)?.id || ''; this.sockets.delete(socket); socket.close(1000, 'left'); }
       else if (type === 'reset' && player.id === this.game.hostId) { this.game = emptyState(this.game.code, this.game.startingCash); this.game.hostId = player.id; this.game.players = [emptyPlayer(player.id, player.name, this.game.startingCash)]; }
       else return;
       await this.persist(); this.broadcast();
@@ -266,7 +279,12 @@ export default {
       const requested = String(body.code || '').trim().toUpperCase();
       if (requested && !ROOM_CODE.test(requested)) return json({ error: 'Room codes must be 4–8 letters or numbers.' }, 400);
       if (body.startingCash !== undefined && (Number(body.startingCash) < 1 || Number(body.startingCash) > 100000 || !Number.isFinite(Number(body.startingCash)))) return json({ error: 'Starting cash must be between 1 and 100000.' }, 400);
-      const code = requested || newCode(), startingCash = normalizeStartingCash(body.startingCash); env.ROOM.idFromName(code); return json({ code, startingCash });
+      const code = requested || newCode(), startingCash = normalizeStartingCash(body.startingCash), roomId = env.ROOM.idFromName(code);
+      if (requested) {
+        const reset = await env.ROOM.get(roomId).fetch(new Request(`https://room.internal/room/${code}`, { method: 'POST', headers: { 'x-reopen-room': 'true', 'x-starting-cash': String(startingCash) } }));
+        if (!reset.ok) return json({ error: 'Could not reopen that room.' }, 503);
+      }
+      return json({ code, startingCash });
     }
     const match = url.pathname.match(/^\/room\/([A-Z0-9]{4,8})$/i);
     if (match) {
