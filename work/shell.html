@@ -575,17 +575,17 @@ body{background:radial-gradient(ellipse at 50% -10%,#235b48 0,#0b3027 42%,#06130
 
 /* Multiplayer is presented as a table first: compact betting spots, cards, and chips. */
 .multi-board{max-width:1180px;margin:0 auto}
-.multi-table{padding:26px 30px 24px;min-height:640px}
+.multi-table{padding:24px 26px 18px;min-height:520px}
 .multi-table>.multi-dealer{padding-top:4px}
 .multi-dealer .table-label{font-family:Georgia,'Times New Roman',serif;letter-spacing:.24em;font-size:12px;color:#f3db9a;text-transform:uppercase}
 .multi-turn{min-height:23px;margin:10px 0 15px;font-size:13px;letter-spacing:.04em}
-.multi-seats{border-top:0;padding:10px 0 20px;gap:14px;min-height:190px}
-.multi-seat{min-height:170px;border-radius:28px;background:linear-gradient(160deg,#114a39d9,#072d23e8);padding:14px 16px;overflow:hidden}
+.multi-seats{border-top:0;padding:8px 0 12px;gap:10px;min-height:145px}
+.multi-seat{flex:1 1 185px;max-width:230px;min-height:135px;border-radius:22px;background:linear-gradient(160deg,#114a39d9,#072d23e8);padding:10px 12px;overflow:hidden}
 .multi-seat::after{content:"";position:absolute;left:13%;right:13%;bottom:12px;height:48px;border:1px solid #dbbe7150;border-radius:50%;pointer-events:none}
 .multi-seat-head{position:relative;z-index:1}
 .multi-seat-name{font-family:Georgia,'Times New Roman',serif;letter-spacing:.05em;color:#f6e7b1}
-.multi-seat .cards{position:relative;z-index:1;min-height:77px;justify-content:center;margin:13px 0 8px}
-.multi-seat .card{width:52px;height:74px}
+.multi-seat .cards{position:relative;z-index:1;min-height:66px;justify-content:center;margin:10px 0 5px}
+.multi-seat .card{width:45px;height:64px;padding:4px 3px}.multi-seat .card .corner{font-size:13px}.multi-seat .card .pip{font-size:15px}.multi-seat .card .bottom{font-size:12px}
 .multi-hands{position:relative;z-index:1;justify-content:center}
 .multi-hand{border-left:0;padding-left:0;text-align:center}
 .multi-hand.active{border:0}
@@ -594,34 +594,34 @@ body{background:radial-gradient(ellipse at 50% -10%,#235b48 0,#0b3027 42%,#06130
 .multi-seat-chip-rail{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px}
 .multi-seat-chip-rail .bet-label{font-size:9px;letter-spacing:.12em;color:#d9c58d;text-transform:uppercase}
 .multi-seat-chip-rail .casino-chip{width:38px;height:38px;font-size:10px}
-.multi-your-spot{margin:18px auto 0;padding:16px 18px 13px;max-width:900px;border-radius:34px;background:linear-gradient(145deg,#174c39e8,#082f25ed)}
-.multi-your-head{justify-content:center;text-align:center}
+.multi-your-spot{margin:7px auto 0;padding:4px 0 0;max-width:980px;border:0;border-top:1px solid #d7bb7166;border-radius:0;background:transparent;box-shadow:none}
+.multi-your-head{justify-content:center;text-align:center;min-height:24px}
 .multi-your-head .eyebrow{display:none}
-.multi-your-head h2{font-size:16px;letter-spacing:.16em;text-transform:uppercase}
-.multi-your-head .chip-bankroll{position:absolute;right:30px;transform:translateY(-2px)}
+.multi-your-head h2{font-size:11px;letter-spacing:.16em;text-transform:uppercase;margin:4px 0 0}.multi-your-head h2::before{content:'Your spot · ';color:#d9c58d}
+.multi-your-head .chip-bankroll{position:absolute;right:12px;transform:translateY(-2px)}
 .multi-your-head .chip-bankroll::before{display:none}
-.multi-betbar{justify-content:center;margin-top:10px;padding-top:10px}
+.multi-betbar{justify-content:center;margin-top:5px;padding-top:5px}
 .multi-betbar .field{display:flex;align-items:center;gap:7px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#e1ca91}
 .multi-betbar input{width:84px;padding:8px 7px;text-align:center}
 .multi-betbar .action{padding:8px 12px}
-.multi-side-spots{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:15px auto 0;max-width:700px}
-.multi-side-spot{position:relative;display:grid;justify-items:center;gap:5px;min-height:104px;padding:11px 10px;border:2px solid #af965d;border-radius:50%;background:radial-gradient(circle,#165542,#082e24 72%);box-shadow:inset 0 0 0 5px #092b21,0 5px 12px #02130d88}
-.multi-side-spot::after{content:"";position:absolute;inset:7px;border:1px dashed #d9bd725f;border-radius:50%;pointer-events:none}
+.multi-side-spots{display:flex;justify-content:center;gap:8px;margin:7px auto 0;max-width:300px}
+.multi-side-spot{position:relative;display:grid;justify-items:center;gap:1px;width:62px;height:62px;min-height:0;padding:3px;border:2px solid #af965d;border-radius:50%;background:radial-gradient(circle,#165542,#082e24 72%);box-shadow:inset 0 0 0 3px #092b21,0 3px 8px #02130d88}
+.multi-side-spot::after{content:"";position:absolute;inset:5px;border:1px dashed #d9bd725f;border-radius:50%;pointer-events:none}
 .multi-side-spot.is-open,.multi-side-spot:has(.multi-side-button[aria-pressed="true"]){border-color:#f2d27d;box-shadow:inset 0 0 0 5px #092b21,0 0 0 3px #e7c77a2d,0 6px 14px #02130daa}
-.multi-side-button{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;width:100%;min-height:63px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
-.multi-side-button .side-spot-number{width:22px;height:22px}
-.multi-side-button .casino-chip{position:absolute;right:1px;top:0;width:31px;height:31px;font-size:9px}
-.multi-side-spot input{position:relative;z-index:2;width:70px;padding:4px;text-align:center;border-radius:5px;display:none}
+.multi-side-button{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:1px;width:100%;min-height:36px;text-align:center;font-size:7px;text-transform:uppercase;letter-spacing:.04em;line-height:1.05}
+.multi-side-button .side-spot-number{width:14px;height:14px;font-size:8px}
+.multi-side-button .casino-chip{position:absolute;right:-2px;top:-3px;width:22px;height:22px;font-size:7px;border-width:2px}
+.multi-side-spot input{position:relative;z-index:2;width:45px;padding:2px;text-align:center;border-radius:4px;display:none;font-size:10px}
 .multi-side-spot.is-open input,.multi-side-spot:has(.multi-side-button[aria-pressed="true"]) input{display:block}
-.multi-side-spot small{position:relative;z-index:1;font-size:9px;text-align:center;white-space:nowrap}
+.multi-side-spot small{position:relative;z-index:1;font-size:6px;text-align:center;white-space:nowrap}
 .multi-side-status{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.multi-controls{justify-content:center;margin-top:16px}
+.multi-controls{justify-content:center;margin-top:9px}
 .multi-room-bar{justify-content:center;border-top:0;margin-top:10px;padding-top:5px}
-.multi-room-bar .multi-code span{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#d9c58d}.multi-room-bar .multi-code strong{font-size:16px}
+.multi-room-bar .multi-code span{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#d9c58d}.multi-room-bar .multi-code strong{font-size:16px}.multi-cash-setting{font-size:10px!important;letter-spacing:.03em!important;text-transform:none!important;color:#b9c8ba!important}
 .multi-side-guide{max-width:900px;margin:10px auto 0;border-top:1px solid #d7bb7166}
 .chip-flight{position:fixed;z-index:1000;left:0;top:0;width:38px;height:38px;display:grid;place-items:center;border:3px dashed #f8e4a1;border-radius:50%;background:#a7524d;color:#fff;font-size:9px;font-weight:800;box-shadow:0 5px 10px #000b;pointer-events:none;animation:chip-fly .55s cubic-bezier(.2,.8,.25,1) forwards}
 @keyframes chip-fly{from{transform:translate(var(--from-x),var(--from-y)) scale(.65) rotate(-16deg);opacity:.2}to{transform:translate(var(--to-x),var(--to-y)) scale(1) rotate(8deg);opacity:1}}
-@media(max-width:760px){.multi-table{padding:20px 12px 18px}.multi-your-head .chip-bankroll{position:static;transform:none}.multi-side-spots{gap:7px}.multi-side-spot{min-height:94px}.multi-side-spot small{font-size:8px}}
+@media(max-width:760px){.multi-table{padding:18px 10px 14px}.multi-your-head .chip-bankroll{position:static;transform:none}.multi-side-spots{gap:6px}.multi-side-spot{width:58px;height:58px}.multi-side-spot small{font-size:5px}}
 
 @media(prefers-reduced-motion:reduce){.card.dealt,.card.revealed{animation:none}
 }
@@ -634,7 +634,7 @@ body{background:radial-gradient(ellipse at 50% -10%,#235b48 0,#0b3027 42%,#06130
   <div class="summary"><div class="stat"><span>Bankroll</span><strong id="bankroll"></strong></div><div class="stat"><span>Current bet</span><strong id="currentBet"></strong></div><div class="stat"><span>Shoe remaining</span><strong id="remaining"></strong></div><div class="stat"><span>Penetration</span><strong id="penetration"></strong></div></div>
   <main>
     <section class="view" id="view-multi">
-      <div id="multiLobby" class="panel"><div class="multi-lobby"><label class="field" for="multiName">Your name<input id="multiName" maxlength="24" placeholder="Player" autocomplete="nickname"></label><label class="field" for="multiRoomInput">Room code<input id="multiRoomInput" maxlength="8" placeholder="ABC123" autocapitalize="characters"></label><div class="multi-actions"><button class="action primary" id="multiCreate">Create room</button><button class="action" id="multiJoin">Join room</button></div></div><p class="help">Enter a code before creating to choose your own room code, or leave it blank for a random code.</p><div id="multiStatus" class="multi-status" role="status">Multiplayer server is not configured yet.</div></div>
+      <div id="multiLobby" class="panel"><div class="multi-lobby"><label class="field" for="multiName">Your name<input id="multiName" maxlength="24" placeholder="Player" autocomplete="nickname"></label><label class="field" for="multiRoomInput">Room code<input id="multiRoomInput" maxlength="8" placeholder="ABC123" autocapitalize="characters"></label><label class="field" for="multiCashInput">Starting cash per player (£)<input id="multiCashInput" type="number" min="1" max="100000" step="1" value="1000"></label><div class="multi-actions"><button class="action primary" id="multiCreate">Create room</button><button class="action" id="multiJoin">Join room</button></div></div><p class="help">Starting cash applies when you create a new room. Players joining an existing room use that room’s setting.</p><div id="multiStatus" class="multi-status" role="status">Multiplayer server is not configured yet.</div></div>
       <div id="multiBoard" class="multi-grid hidden"><div class="multi-table"><div class="multi-dealer"><div class="table-label">Dealer</div><div id="multiDealerCards" class="cards dealer"></div><span id="multiDealerScore" class="pill">—</span></div><div id="multiTurn" class="multi-turn"></div><div id="multiPlayers" class="multi-seats"></div><section id="multiYourSpot" class="multi-your-spot"><div class="multi-your-head"><div><span class="eyebrow">Your betting spot</span><h2 id="multiYourName">Your seat</h2></div><div id="multiYourBankroll" class="chip-bankroll"></div></div><div class="multi-betbar"><label class="field" for="multiBetInput">Main wager<input id="multiBetInput" type="number" min="10" max="500" step="1" value="10"></label><button class="action" id="multiPlaceBet">Place chips</button></div><div class="multi-side-spots"><article class="multi-side-spot"><button id="multiSidePerfectToggle" class="multi-side-button" type="button" aria-pressed="false"><span class="side-spot-number">1</span><span>Perfect Pairs</span><span id="multiSidePerfectChip" class="casino-chip hidden"></span></button><input id="multiSidePerfectInput" type="number" min="0" max="500" step="1" value="0" aria-label="Perfect Pairs wager" placeholder="Amount"><small>25 / 15 / 5 · 1</small></article><article class="multi-side-spot"><button id="multiSideThreeToggle" class="multi-side-button" type="button" aria-pressed="false"><span class="side-spot-number">2</span><span>21+3</span><span id="multiSideThreeChip" class="casino-chip hidden"></span></button><input id="multiSideThreeInput" type="number" min="0" max="500" step="1" value="0" aria-label="21+3 wager" placeholder="Amount"><small>9:1 · 2</small></article><article class="multi-side-spot"><button id="multiSideLuckyToggle" class="multi-side-button" type="button" aria-pressed="false"><span class="side-spot-number">3</span><span>Lucky Lucky</span><span id="multiSideLuckyChip" class="casino-chip hidden"></span></button><input id="multiSideLuckyInput" type="number" min="0" max="500" step="1" value="0" aria-label="Lucky Lucky wager" placeholder="Amount"><small>200:1 · 3</small></article></div><p id="multiSideHelp" class="multi-side-status" role="status">Side bets are optional.</p><div id="multiControls" class="multi-controls"><button class="action primary" id="multiHit" data-multi-action="hit">Hit <kbd>H</kbd></button><button class="action" id="multiStand" data-multi-action="stand">Stand <kbd>S</kbd></button><button class="action" id="multiDouble" data-multi-action="double">Double <kbd>D</kbd></button><button class="action" id="multiSplit" data-multi-action="split">Split <kbd>P</kbd></button></div><div class="multi-room-bar"><div id="multiRoomCode" class="multi-code"></div><button class="action primary" id="multiStart">Deal round</button><button class="ghost" id="multiCopy">Copy room code</button><button class="ghost" id="multiLeave">Leave room</button></div></section><details class="multi-side-guide"><summary>Side-bet payouts</summary><div class="multi-side-guide-grid"><p><strong>Perfect Pairs</strong><br>25:1 same suit · 15:1 same color · 5:1 mixed color.</p><p><strong>21+3</strong><br>Winning three-card poker hands pay according to the table schedule.</p><p><strong>Lucky Lucky</strong><br>19–21 totals and special 6-7-8 / 7-7-7 hands qualify.</p></div></details></div></div></section>
     <section class="view active" id="view-play"><div id="playHost"></div><div id="playCoach" class="panel coach-panel hidden" aria-live="polite"><div class="coach-heading"><div><span class="eyebrow">25-hand checkpoint</span><h2 id="playCoachTitle">Your play trend</h2></div><button class="ghost" id="coachSeeStats">See history</button></div><div id="playCoachBody"></div></div></section>
     <section class="view" id="view-training"><div class="training-heading"><div><h1 class="section-title">My training</h1><p class="section-intro">A personal practice deck built from decisions you missed in this session. It tracks choices, not whether luck made the hand win or lose.</p></div><span id="trainingFocusBadge" class="pill">All mistakes</span></div>
@@ -736,29 +736,29 @@ const savedBeginnerDecks=Number(storage.read('blackjack.beginnerDecks.v1'));
 $('beginnerDecks').value=String(beginnerDeckChoices.includes(savedBeginnerDecks)?savedBeginnerDecks:1);
 let beginner=null,beginnerChecks=0,beginnerCorrect=0;
 const MULTIPLAYER_ENDPOINT='https://blackjack-multiplayer.westley-kleinman.workers.dev';
-const multi={socket:null,code:'',name:'',selfId:'',state:null,legal:[],error:''};
+const multi={socket:null,code:'',name:'',cash:1000,selfId:'',state:null,legal:[],error:'',dealtRound:-1};
 const multiSideUI={perfectPairs:'multiSidePerfect',twentyOneThree:'multiSideThree',luckyLucky:'multiSideLucky'};
 const multiSideRecall={perfectPairs:5,twentyOneThree:5,luckyLucky:5};
 function multiplayerReady(){return /^https?:\/\//.test(MULTIPLAYER_ENDPOINT)}
 function multiplayerWsUrl(code){return MULTIPLAYER_ENDPOINT.replace(/^http/,'ws')+'/room/'+encodeURIComponent(code)}
 function multiSend(type,payload={}){if(multi.socket?.readyState===WebSocket.OPEN)multi.socket.send(JSON.stringify({type,...payload}))}
-function multiDisconnect(){if(multi.socket){multi.socket.close();multi.socket=null}multi.state=null;multi.legal=[];multi.selfId='';multi.code='';renderMulti()}
-function multiConnect(code,name){
+function multiDisconnect(){if(multi.socket){multi.socket.close();multi.socket=null}multi.state=null;multi.legal=[];multi.selfId='';multi.code='';multi.dealtRound=-1;renderMulti()}
+function multiConnect(code,name,startingCash=1000){
   if(!multiplayerReady()){multi.error='Multiplayer server is not configured yet.';renderMulti();return}
-  if(multi.socket)multi.socket.close();multi.code=String(code||'').trim().toUpperCase();multi.name=String(name||'Player').trim().slice(0,24)||'Player';
+  if(multi.socket)multi.socket.close();multi.code=String(code||'').trim().toUpperCase();multi.name=String(name||'Player').trim().slice(0,24)||'Player';multi.cash=Number.isFinite(Number(startingCash))?Math.max(1,Math.min(100000,Number(startingCash))):1000;multi.dealtRound=-1;
   try{
     const socket=new WebSocket(multiplayerWsUrl(multi.code));multi.socket=socket;multi.error='Connecting…';renderMulti();
-    socket.addEventListener('open',()=>{multiSend('join',{name:multi.name});multi.error='';renderMulti()});
+    socket.addEventListener('open',()=>{multiSend('join',{name:multi.name,startingCash:multi.cash});multi.error='';renderMulti()});
     socket.addEventListener('message',event=>{try{const message=JSON.parse(event.data);if(message.type==='state'){multi.selfId=message.selfId;multi.state=message.state;multi.legal=message.legalActions||[];multi.error='';renderMulti()}else if(message.type==='error'){multi.error=message.message;renderMulti()}}catch{multi.error='The room sent an unreadable update.';renderMulti()}});
     socket.addEventListener('close',()=>{if(multi.socket===socket){multi.socket=null;if(multi.state)multi.error='Disconnected from the room.';renderMulti()}});
     socket.addEventListener('error',()=>{if(multi.socket===socket){multi.error='Could not connect to this room.';renderMulti()}});
   }catch{multi.error='Could not open a multiplayer connection.';renderMulti()}
 }
-async function multiCreate(){if(!multiplayerReady()){multi.error='Multiplayer server is not configured yet.';renderMulti();return}const name=$('multiName').value.trim()||'Player',requestedCode=$('multiRoomInput').value.trim().toUpperCase();if(requestedCode&&!/^[A-Z0-9]{4,8}$/.test(requestedCode)){multi.error='Room codes must be 4–8 letters or numbers.';renderMulti();return}$('multiStatus').textContent='Creating room…';try{const response=await fetch(MULTIPLAYER_ENDPOINT+'/create',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({code:requestedCode||undefined})});if(!response.ok)throw new Error('create');const data=await response.json();$('multiRoomInput').value=data.code;multiConnect(data.code,name)}catch{multi.error='Could not create a room. Check the deployed room server.';renderMulti()}}
-function multiJoin(){const code=$('multiRoomInput').value.trim().toUpperCase(),name=$('multiName').value.trim()||'Player';if(!/^[A-Z0-9]{4,8}$/.test(code)){multi.error='Enter a room code with 4–8 letters or numbers.';renderMulti();return}multiConnect(code,name)}
-function multiCardHTML(card){return card?cardHTML(card):cardHTML(0,true)}
+async function multiCreate(){if(!multiplayerReady()){multi.error='Multiplayer server is not configured yet.';renderMulti();return}const name=$('multiName').value.trim()||'Player',requestedCode=$('multiRoomInput').value.trim().toUpperCase(),startingCash=Number($('multiCashInput').value);if(requestedCode&&!/^[A-Z0-9]{4,8}$/.test(requestedCode)){multi.error='Room codes must be 4–8 letters or numbers.';renderMulti();return}if(!Number.isFinite(startingCash)||startingCash<1||startingCash>100000){multi.error='Starting cash must be between £1 and £100,000.';renderMulti();return}$('multiStatus').textContent='Creating room…';try{const response=await fetch(MULTIPLAYER_ENDPOINT+'/create',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({code:requestedCode||undefined,startingCash})});if(!response.ok)throw new Error('create');const data=await response.json();$('multiRoomInput').value=data.code;multiConnect(data.code,name,data.startingCash||startingCash)}catch{multi.error='Could not create a room. Check the deployed room server.';renderMulti()}}
+function multiJoin(){const code=$('multiRoomInput').value.trim().toUpperCase(),name=$('multiName').value.trim()||'Player',startingCash=Number($('multiCashInput').value)||1000;if(!/^[A-Z0-9]{4,8}$/.test(code)){multi.error='Enter a room code with 4–8 letters or numbers.';renderMulti();return}multiConnect(code,name,startingCash)}
+function multiCardHTML(card,animate=false,delay=0){return card?cardHTML(card,false,animate,delay):cardHTML(0,true,animate,delay)}
 function multiChipHTML(amount,kind=''){return amount>0?'<span class="casino-chip '+kind+'">'+money(amount)+'</span>':''}
-function multiPlayerMarkup(player,state){const own=player.id===multi.selfId,active=state.players[state.activePlayer]?.id===player.id;const hands=player.hands.length?'<div class="multi-hands">'+player.hands.map((hand,index)=>'<div class="multi-hand '+(active&&index===player.activeHand?'active':'')+'"><div class="cards">'+hand.cards.map(multiCardHTML).join('')+'</div></div>').join('')+'</div>':'<div class="multi-empty">Waiting for a bet</div>';
+function multiPlayerMarkup(player,state,seatIndex,animateDeal){const own=player.id===multi.selfId,active=state.players[state.activePlayer]?.id===player.id;const hands=player.hands.length?'<div class="multi-hands">'+player.hands.map((hand,index)=>'<div class="multi-hand '+(active&&index===player.activeHand?'active':'')+'"><div class="cards">'+hand.cards.map((card,cardIndex)=>multiCardHTML(card,animateDeal,cardIndex===0?seatIndex*150:850+seatIndex*150)).join('')+'</div></div>').join('')+'</div>':'<div class="multi-empty">Waiting for a bet</div>';
   const sideChips=SIDE_BET_IDS.map(id=>player.sideBets?.[id]>0?'<span class="bet-label">'+SIDE_BETS[id].name+' '+multiChipHTML(player.sideBets[id])+'</span>':'').join('');
   const mainChip=player.bet>0?'<span class="bet-label">Main '+multiChipHTML(player.bet,'gold')+'</span>':'';
   return '<article class="multi-seat '+(active?'active ':'')+(own?'is-you ':'')+(!player.connected?'is-disconnected':'')+'"><div class="multi-seat-head"><span class="multi-seat-name">'+escapeHTML(player.name)+(own?' · You':'')+'</span></div>'+hands+'<div class="multi-seat-chip-rail">'+mainChip+sideChips+(player.bankroll>0?'<span class="bet-label">Stack '+multiChipHTML(player.bankroll,'stack')+'</span>':'')+'</div></article>'}
@@ -772,10 +772,10 @@ function renderMulti(){
   $('multiCreate').disabled=!configured;$('multiJoin').disabled=!configured;
   $('multiStatus').textContent=multi.error||(configured?'Create a room or enter a code to join one.':'Multiplayer server is not configured yet.');
   if(!connected)return;
-  const state=multi.state;$('multiStatus').textContent=multi.error||state.message||'Connected.';$('multiRoomCode').innerHTML='<span>Room code</span><strong>'+escapeHTML(state.code)+'</strong>';
-  $('multiDealerCards').innerHTML=state.dealer.map(multiCardHTML).join('')||'<span class="muted">Waiting for the deal</span>';$('multiDealerScore').textContent=state.dealerRevealed?score(state.dealer):(state.dealer.length?rank(state.dealer[0])+' showing':'—');
+  const state=multi.state,animateDeal=state.round>0&&state.round!==multi.dealtRound;if(animateDeal)multi.dealtRound=state.round;$('multiStatus').textContent=multi.error||state.message||'Connected.';$('multiRoomCode').innerHTML='<span>Room code</span><strong>'+escapeHTML(state.code)+'</strong><span class="multi-cash-setting">'+money(state.startingCash||1000)+' per seat</span>';
+  $('multiDealerCards').innerHTML=state.dealer.map((card,index)=>multiCardHTML(card,animateDeal,index===0?700:1650)).join('')||'<span class="muted">Waiting for the deal</span>';$('multiDealerScore').textContent=state.dealerRevealed?score(state.dealer):(state.dealer.length?rank(state.dealer[0])+' showing':'—');
   const active=state.players[state.activePlayer];$('multiTurn').textContent=state.phase==='playing'&&active?active.name+' is playing':state.phase==='settled'?'Round complete · place bets for the next round':'Place bets, then the host deals.';
-  $('multiPlayers').innerHTML=state.players.map(player=>multiPlayerMarkup(player,state)).join('')||'<div class="multi-empty">No players have joined.</div>';
+  $('multiPlayers').innerHTML=state.players.map((player,index)=>multiPlayerMarkup(player,state,index,animateDeal)).join('')||'<div class="multi-empty">No players have joined.</div>';
   const self=state.players.find(player=>player.id===multi.selfId);const host=state.hostId===multi.selfId;const canBet=['waiting','settled'].includes(state.phase);$('multiYourName').textContent=self?self.name:'Your seat';$('multiYourBankroll').innerHTML=self?multiChipHTML(self.bankroll,'stack'):'—';
   if(self){if(document.activeElement!==$('multiBetInput'))$('multiBetInput').value=self.bet;for(const id of SIDE_BET_IDS){const prefix=multiSideUI[id],amount=self.sideBets?.[id]||0;if(document.activeElement!==$(prefix+'Input'))$(prefix+'Input').value=amount;$(prefix+'Chip').innerHTML=multiChipHTML(amount);$(prefix+'Chip').classList.toggle('hidden',amount<=0);$(prefix+'Toggle').setAttribute('aria-pressed',String(amount>0));multiSideSpot(id)?.classList.toggle('is-open',amount>0);}}
   $('multiSideHelp').textContent=self?.sideResults?.length?'Last side results: '+self.sideResults.map(result=>result.category+' · '+(result.paid>0?'returned '+money(result.paid):'lost')).join(' · '):'Side bets are optional and are deducted with your main wager when the host deals.';

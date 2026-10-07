@@ -62,18 +62,22 @@ function makeShoe(decks) {
   }
   return shoe;
 }
-function emptyPlayer(id, name) {
-  return { id, name, connected: true, bankroll: 1000, bet: 0, sideBets: emptySideBets(), sideProfiles: emptySideProfiles(), sideResults: [], originalCards: [], hands: [], activeHand: 0, result: '', ready: false };
+function normalizeStartingCash(value) {
+  const amount = Number(value);
+  return Number.isFinite(amount) && amount >= 1 && amount <= 100000 ? Math.round(amount * 100) / 100 : 1000;
 }
-function emptyState(code) {
+function emptyPlayer(id, name, bankroll = 1000) {
+  return { id, name, connected: true, bankroll: normalizeStartingCash(bankroll), bet: 0, sideBets: emptySideBets(), sideProfiles: emptySideProfiles(), sideResults: [], originalCards: [], hands: [], activeHand: 0, result: '', ready: false };
+}
+function emptyState(code, startingCash = 1000) {
   return { code, phase: 'waiting', hostId: '', players: [], dealer: [], dealerRevealed: false,
-    shoe: makeShoe(RULES.decks), position: 0, round: 0, activePlayer: 0, message: 'Waiting for players.', rules: { ...RULES } };
+    startingCash: normalizeStartingCash(startingCash), shoe: makeShoe(RULES.decks), position: 0, round: 0, activePlayer: 0, message: 'Waiting for players.', rules: { ...RULES } };
 }
 function publicState(state) {
   return {
     code: state.code, phase: state.phase, round: state.round, message: state.message,
     dealer: state.dealer.map((card, index) => index === 1 && !state.dealerRevealed ? null : card),
-    dealerRevealed: state.dealerRevealed, position: state.position, shoeSize: state.shoe.length,
+    dealerRevealed: state.dealerRevealed, position: state.position, shoeSize: state.shoe.length, startingCash: normalizeStartingCash(state.startingCash),
     activePlayer: state.activePlayer, hostId: state.hostId, rules: state.rules,
     players: state.players.map(player => ({ id: player.id, name: player.name, connected: player.connected,
       bankroll: player.bankroll, bet: player.bet, sideBets: { ...player.sideBets }, sideProfiles: { ...player.sideProfiles }, sideResults: player.sideResults.map(result => ({ ...result })),
@@ -197,6 +201,7 @@ export class BlackjackRoom {
   constructor(state, env) { this.state = state; this.env = env; this.sockets = new Map(); this.ready = this.load(); }
   async load() {
     this.game = await this.state.storage.get('game') || emptyState(this.state.id.toString().slice(-8).toUpperCase());
+    this.game.startingCash = normalizeStartingCash(this.game.startingCash);
     for (const player of this.game.players) { player.sideBets = { ...emptySideBets(), ...(player.sideBets || {}) }; player.sideProfiles = { ...emptySideProfiles(), ...(player.sideProfiles || {}) }; player.sideResults = player.sideResults || []; player.originalCards = player.originalCards || []; }
   }
   async persist() { await this.state.storage.put('game', this.game); }
@@ -223,7 +228,10 @@ export class BlackjackRoom {
         const name = String(event.name || 'Player').trim().slice(0, 24) || 'Player';
         let player = this.game.players.find(item => item.id === playerId);
         if (!player && this.game.players.length >= this.game.rules.maxPlayers) return socket.send(JSON.stringify({ type: 'error', message: 'This table is full.' }));
-        if (!player) { player = emptyPlayer(playerId, name); this.game.players.push(player); if (!this.game.hostId) this.game.hostId = playerId; }
+        if (!player) {
+          if (this.game.players.length === 0 && this.game.phase === 'waiting') this.game.startingCash = normalizeStartingCash(event.startingCash);
+          player = emptyPlayer(playerId, name, this.game.startingCash); this.game.players.push(player); if (!this.game.hostId) this.game.hostId = playerId;
+        }
         player.connected = true; player.name = name; this.send(socket, playerId); await this.persist(); this.broadcast(); return;
       }
       const player = this.game.players.find(item => item.id === playerId);
@@ -237,7 +245,7 @@ export class BlackjackRoom {
         else { player.sideBets[id] = Math.round(amount * 100) / 100; player.sideProfiles[id] = profile; this.game.message = `${player.name} updated their side bets.`; }
       } else if (type === 'start' && player.id === this.game.hostId && ['waiting', 'betting', 'settled'].includes(this.game.phase)) startRound(this.game);
       else if (type === 'action') handleAction(this.game, player, String(event.action));
-      else if (type === 'reset' && player.id === this.game.hostId) { this.game = emptyState(this.game.code); this.game.hostId = player.id; this.game.players = [emptyPlayer(player.id, player.name)]; }
+      else if (type === 'reset' && player.id === this.game.hostId) { this.game = emptyState(this.game.code, this.game.startingCash); this.game.hostId = player.id; this.game.players = [emptyPlayer(player.id, player.name, this.game.startingCash)]; }
       else return;
       await this.persist(); this.broadcast();
     } catch (error) { socket.send(JSON.stringify({ type: 'error', message: 'Invalid game request.' })); }
@@ -253,10 +261,12 @@ export default {
     const url = new URL(request.url);
     if (request.method === 'OPTIONS') return new Response('', { headers: { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET,POST,OPTIONS', 'access-control-allow-headers': 'content-type' } });
     if (url.pathname === '/create' && request.method === 'POST') {
-      let requested = '';
-      try { requested = String((await request.json())?.code || '').trim().toUpperCase(); } catch { /* Empty body means generate a code. */ }
+      let body = {};
+      try { body = await request.json() || {}; } catch { /* Empty body means generate a code. */ }
+      const requested = String(body.code || '').trim().toUpperCase();
       if (requested && !ROOM_CODE.test(requested)) return json({ error: 'Room codes must be 4–8 letters or numbers.' }, 400);
-      const code = requested || newCode(); env.ROOM.idFromName(code); return json({ code });
+      if (body.startingCash !== undefined && (Number(body.startingCash) < 1 || Number(body.startingCash) > 100000 || !Number.isFinite(Number(body.startingCash)))) return json({ error: 'Starting cash must be between 1 and 100000.' }, 400);
+      const code = requested || newCode(), startingCash = normalizeStartingCash(body.startingCash); env.ROOM.idFromName(code); return json({ code, startingCash });
     }
     const match = url.pathname.match(/^\/room\/([A-Z0-9]{4,8})$/i);
     if (match) {
