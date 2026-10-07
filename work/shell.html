@@ -641,7 +641,7 @@ const beginnerDeckChoices=[1,2,4,6,8];
 const savedBeginnerDecks=Number(storage.read('blackjack.beginnerDecks.v1'));
 $('beginnerDecks').value=String(beginnerDeckChoices.includes(savedBeginnerDecks)?savedBeginnerDecks:1);
 let beginner=null,beginnerChecks=0,beginnerCorrect=0;
-const MULTIPLAYER_ENDPOINT='__MULTIPLAYER_ENDPOINT__';
+const MULTIPLAYER_ENDPOINT='https://blackjack-multiplayer.westley-kleinman.workers.dev';
 const multi={socket:null,code:'',name:'',selfId:'',state:null,legal:[],error:''};
 function multiplayerReady(){return /^https?:\/\//.test(MULTIPLAYER_ENDPOINT)}
 function multiplayerWsUrl(code){return MULTIPLAYER_ENDPOINT.replace(/^http/,'ws')+'/room/'+encodeURIComponent(code)}
