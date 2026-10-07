@@ -70,9 +70,11 @@ function dealOneToSplitHand(state, player, hand) {
   if (value.total >= 21 || hand.splitAces) hand.done = true;
 }
 function advanceTurn(state) {
-  const player = currentPlayer(state);
-  if (player && player.hands.some(hand => !hand.done)) return;
-  if (state.activePlayer + 1 < state.players.length) { state.activePlayer++; state.players[state.activePlayer].activeHand = 0; return; }
+  while (state.activePlayer < state.players.length) {
+    const player = currentPlayer(state);
+    if (player?.connected && player.hands.some(hand => !hand.done)) return;
+    state.activePlayer++;
+  }
   playDealer(state);
 }
 function advanceHand(state) {
@@ -109,26 +111,29 @@ function settle(state) {
     }
     player.result = roundNet > 0 ? 'Win' : roundNet < 0 ? 'Lose' : 'Push';
   }
-  state.phase = 'settled'; state.message = 'Round complete. Place the next bets.'; state.round++;
+  state.phase = 'settled'; state.message = 'Round complete. Place the next bets.';
 }
 function startRound(state) {
   if (state.players.length === 0) { state.message = 'At least one player must join.'; return; }
-  const eligible = state.players.filter(player => player.bet >= state.rules.minBet && player.bet <= state.rules.maxBet && player.bankroll >= player.bet);
-  if (eligible.length !== state.players.length) { state.message = `Everyone at the table must place a valid bet between £${state.rules.minBet} and £${state.rules.maxBet} before the host deals.`; return; }
-  for (const player of state.players) {
+  const seated = state.players.filter(player => player.connected);
+  const eligible = seated.filter(player => player.bet >= state.rules.minBet && player.bet <= state.rules.maxBet && player.bankroll >= player.bet);
+  if (!seated.length) { state.message = 'At least one connected player must join.'; return; }
+  if (eligible.length !== seated.length) { state.message = `Everyone at the table must place a valid bet between £${state.rules.minBet} and £${state.rules.maxBet} before the host deals.`; return; }
+  for (const player of state.players) { player.hands = []; player.activeHand = 0; player.result = ''; player.ready = false; }
+  for (const player of seated) {
     player.bankroll -= player.bet;
-    player.hands = [makeHand([], player.bet)]; player.activeHand = 0; player.result = ''; player.ready = false;
+    player.hands = [makeHand([], player.bet)];
   }
   state.dealer = []; state.dealerRevealed = false; state.round++; state.phase = 'playing'; state.activePlayer = 0;
-  for (const player of state.players) player.hands[0].cards.push(draw(state));
+  for (const player of seated) player.hands[0].cards.push(draw(state));
   state.dealer.push(draw(state));
-  for (const player of state.players) player.hands[0].cards.push(draw(state));
+  for (const player of seated) player.hands[0].cards.push(draw(state));
   state.dealer.push(draw(state));
-  for (const player of state.players) {
+  for (const player of seated) {
     const value = handValue(player.hands[0].cards); if (value.total >= 21) player.hands[0].done = true;
   }
-  if (handValue(state.dealer).blackjack || state.players.every(player => player.hands.every(hand => hand.done))) playDealer(state);
-  else { state.message = `${currentPlayer(state).name}'s turn.`; }
+  if (handValue(state.dealer).blackjack) playDealer(state);
+  else { advanceTurn(state); if (state.phase === 'playing') state.message = `${currentPlayer(state).name}'s turn.`; }
 }
 function handleAction(state, player, action) {
   if (!legalActions(state, player).includes(action)) return;
@@ -164,7 +169,7 @@ export class BlackjackRoom {
     const pair = new WebSocketPair(); pair[1].accept();
     let playerId = crypto.randomUUID(); this.sockets.set(pair[1], playerId);
     pair[1].addEventListener('message', event => this.message(pair[1], playerId, event.data));
-    pair[1].addEventListener('close', () => { const player = this.game.players.find(item => item.id === playerId); if (player) player.connected = false; this.sockets.delete(pair[1]); this.persist().then(() => this.broadcast()); });
+    pair[1].addEventListener('close', () => { const player = this.game.players.find(item => item.id === playerId); if (player) { player.connected = false; if (this.game.phase === 'playing' && currentPlayer(this.game)?.id === playerId) { player.hands.forEach(hand => { hand.done = true; }); advanceTurn(this.game); if (this.game.phase === 'playing') this.game.message = `${currentPlayer(this.game).name}'s turn.`; } } this.sockets.delete(pair[1]); this.persist().then(() => this.broadcast()); });
     this.send(pair[1], playerId); return new Response(null, { status: 101, webSocket: pair[0] });
   }
   async message(socket, playerId, raw) {
