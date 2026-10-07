@@ -169,7 +169,7 @@ export class BlackjackRoom {
     const pair = new WebSocketPair(); pair[1].accept();
     let playerId = crypto.randomUUID(); this.sockets.set(pair[1], playerId);
     pair[1].addEventListener('message', event => this.message(pair[1], playerId, event.data));
-    pair[1].addEventListener('close', () => { const player = this.game.players.find(item => item.id === playerId); if (player) { player.connected = false; if (this.game.phase === 'playing' && currentPlayer(this.game)?.id === playerId) { player.hands.forEach(hand => { hand.done = true; }); advanceTurn(this.game); if (this.game.phase === 'playing') this.game.message = `${currentPlayer(this.game).name}'s turn.`; } } this.sockets.delete(pair[1]); this.persist().then(() => this.broadcast()); });
+    pair[1].addEventListener('close', () => { const player = this.game.players.find(item => item.id === playerId); if (player) { player.connected = false; if (this.game.hostId === playerId) this.game.hostId = this.game.players.find(item => item.connected)?.id || ''; if (this.game.phase === 'playing' && currentPlayer(this.game)?.id === playerId) { player.hands.forEach(hand => { hand.done = true; }); advanceTurn(this.game); if (this.game.phase === 'playing') this.game.message = `${currentPlayer(this.game).name}'s turn.`; } } this.sockets.delete(pair[1]); this.persist().then(() => this.broadcast()); });
     this.send(pair[1], playerId); return new Response(null, { status: 101, webSocket: pair[0] });
   }
   async message(socket, playerId, raw) {
