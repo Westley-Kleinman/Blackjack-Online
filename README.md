@@ -8,7 +8,7 @@ Open `outputs/blackjack.html` directly in a browser. The solo table, strategy so
 
 ## Multiplayer deployment
 
-The multiplayer tab is configured by replacing `__MULTIPLAYER_ENDPOINT__` in `work/shell.html` with the deployed Worker URL, then rebuilding the client into `outputs/blackjack.html` and the repository root `index.html`:
+The committed multiplayer tab is configured for the deployed Worker. If you deploy the Worker under a different URL later, replace the value of `MULTIPLAYER_ENDPOINT` in `work/shell.html`, then rebuild the client into `outputs/blackjack.html` and the repository root `index.html`:
 
 ```powershell
 $engine = Get-Content -Raw work/engine.js
