@@ -207,7 +207,7 @@ export default {
       const code = newCode(); env.ROOM.idFromName(code); return json({ code });
     }
     const match = url.pathname.match(/^\/room\/([A-Z0-9]{4,8})$/i);
-    if (match && request.headers.get('Upgrade') === 'websocket') {
+    if (match) {
       const code = match[1].toUpperCase(); if (!ROOM_CODE.test(code)) return json({ error: 'Invalid room code.' }, 400);
       return env.ROOM.get(env.ROOM.idFromName(code)).fetch(request);
     }
