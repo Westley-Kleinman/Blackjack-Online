@@ -1,0 +1,2384 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blackjack · Table & Trainer</title>
+<style>
+:root{color-scheme:dark;--bg:#091b17;--felt:#103c32;--felt2:#0d3129;--line:#3b7364;--ink:#f0efe5;--muted:#b2c4ba;--gold:#e8c477;--red:#bc625c;--card:#fffdf5;--cardInk:#17332d}
+
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#194b3e 0,#0d2b24 55%,#081a16 100%);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+button,input,select{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.38}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.app{max-width:1160px;margin:auto;padding:19px 24px 36px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
+.brand{display:flex;align-items:center;gap:11px;letter-spacing:.18em;text-transform:uppercase;font-size:13px;font-weight:800}
+.mark{width:35px;height:35px;border:1px solid var(--gold);border-radius:50%;display:grid;place-items:center;color:var(--gold);font-size:18px}
+.top-right{display:flex;gap:9px}
+.nav{display:flex;gap:4px;border:1px solid #396658;background:#0b2922;border-radius:11px;padding:4px}
+.nav button{border:0;border-radius:8px;background:transparent;color:var(--muted);padding:8px 15px}
+.nav button.active{background:#286050;color:#fff}
+.ghost{border:1px solid #47705f;border-radius:8px;background:#173e33;color:var(--ink);padding:8px 13px}
+.ghost:hover:not(:disabled),.action:hover:not(:disabled){filter:brightness(1.15)}
+.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:16px 0}
+.stat{border:1px solid #3b6b5b;border-radius:11px;background:#0e2e26;padding:10px 14px}
+.stat span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.11em}
+.stat strong{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.view{display:none}
+.view.active{display:block}
+.table{background:radial-gradient(ellipse at center,#174c3f 0,#10392f 67%,#0c2e26 100%);border:1px solid #477965;border-radius:26px;box-shadow:inset 0 0 0 7px #123e33,0 20px 60px #061a16a6;min-height:420px;padding:20px 28px 24px}
+.table-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.table-label{color:#c9dbc9;text-transform:uppercase;font-size:11px;font-weight:700;letter-spacing:.16em}
+.pill{font-size:12px;color:#d5e1d6;border:1px solid #4b806b;border-radius:99px;padding:5px 10px;background:#184c3d}
+.dealer{min-height:149px}
+.cards{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.card{width:72px;height:100px;background:var(--card);color:var(--cardInk);border-radius:7px;border:2px solid #e5e0cb;box-shadow:0 5px 8px #06201966;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:7px 6px;font-weight:800}
+.card .corner{align-self:flex-start;font-size:20px;line-height:1}
+.card .pip{font-size:24px;color:#a65950;line-height:1}
+.card .bottom{align-self:flex-end;transform:rotate(180deg);font-size:18px;line-height:1}
+.card.back{color:#d2ead4;background:repeating-linear-gradient(45deg,#1d6154 0 7px,#184c42 7px 14px);border-color:#d6dec8;justify-content:center;font-size:25px}
+.divider{border-top:1px solid #6b9a8270;margin:3px 0 15px}
+.player-header{display:flex;justify-content:space-between;align-items:center}
+.hands{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;min-height:138px}
+.hand{border:1px solid transparent;border-radius:13px;padding:8px 10px;min-width:178px}
+.hand.active{background:#1d5a47;border-color:#d5bc75}
+.hand .cards{margin:6px 0}
+.hand .card{width:60px;height:83px}
+.hand .card .corner{font-size:17px}
+.hand .card .pip{font-size:19px}
+.hand small{color:#d4dfd6}
+.hand-title{font-size:12px;font-weight:750;color:#f3e0a7}
+.notice{color:#dce8dc;min-height:25px;padding:8px 2px 0}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px}
+.action{border:1px solid #7ba693;background:#285e4e;color:#fff;border-radius:9px;padding:10px 15px;font-weight:700;min-width:78px}
+.action.primary{background:var(--gold);border-color:#f4d78f;color:#1a332b}
+.action.danger{border-color:#a86a64;color:#f5cbc3}
+.action kbd{font:inherit;opacity:.7;margin-left:4px;font-size:11px}
+.bet-row,.insurance-row{display:flex;flex-wrap:wrap;align-items:center;gap:9px}
+.bet-row label{color:#c5d7cd;font-size:13px}
+.bet-row input{width:105px;background:#08271f;border:1px solid #5e8b74;color:white;padding:9px;border-radius:8px}
+.help{color:var(--muted);font-size:12px;margin:9px 2px}
+.panel{background:#0d2c25;border:1px solid #39685a;border-radius:13px;padding:17px;margin-top:14px}
+.panel h2{font-size:16px;margin:0 0 7px}
+.panel p{margin:5px 0;color:#d5dfd5}
+.section-title{font-size:22px;font-weight:750;margin:0 0 12px}
+.section-intro{color:var(--muted);margin:0 0 16px}
+.trainer-grid{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px}
+.trainer-side{align-self:start}
+.segmented{display:flex;gap:6px;margin:0 0 15px}
+.segmented button{border:1px solid #45705e;border-radius:8px;background:#163b31;color:#dce9dc;padding:8px 13px}
+.segmented button.active{background:var(--gold);color:#1b342c;border-color:var(--gold);font-weight:750}
+.check-form{display:flex;gap:7px;margin-top:12px}
+.check-form input{width:100px;min-width:0;background:#08271f;border:1px solid #5e8b74;color:#fff;padding:9px;border-radius:8px}
+.check-result{font-weight:750;margin-top:10px;color:var(--gold)}
+.ref{font-size:13px;display:grid;gap:8px}
+.ref div{display:flex;justify-content:space-between;border-bottom:1px solid #345c4f;padding-bottom:6px}
+.ref strong{color:var(--gold)}
+.switch-row{display:flex;align-items:center;gap:8px;color:#dce9df;font-size:13px}
+.switch-row input{accent-color:#d6b76f}
+.drill-settings{display:flex;gap:13px;flex-wrap:wrap;align-items:end}
+.field{display:grid;gap:5px;color:var(--muted);font-size:12px}
+.field select,.field input{background:#092820;color:#fff;border:1px solid #57806b;border-radius:8px;padding:9px;min-width:105px}
+.drill-stage{margin:18px 0;background:#154438;border:1px solid #497765;border-radius:20px;min-height:215px;display:grid;place-items:center;text-align:center;padding:15px}
+.drill-stage .cards{justify-content:center}
+.drill-stage .card{width:82px;height:112px}
+.drill-stage .big{font-size:28px;font-weight:800;color:var(--gold)}
+.drill-progress{color:var(--muted);font-size:13px}
+.drill-answer{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.drill-answer input{width:110px;background:#092820;color:#fff;border:1px solid #57806b;border-radius:8px;padding:9px}
+.drill-metrics{display:flex;gap:10px;margin-top:13px}
+.drill-metrics .stat{min-width:125px}
+.modal{position:fixed;inset:0;background:#04100ec9;display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+.modal.open{display:flex}
+.dialog{width:min(620px,100%);max-height:92vh;overflow:auto;background:#102e26;border:1px solid #769682;border-radius:16px;box-shadow:0 25px 70px #0009;padding:20px}
+.dialog-head{display:flex;justify-content:space-between;align-items:center}
+.dialog h2{margin:0;font-size:21px}
+.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:19px 0}
+.settings-grid .field select,.settings-grid .field input{width:100%}
+.check-field{display:flex;align-items:center;gap:9px;color:#e4ece3;font-size:13px;padding-top:12px}
+.check-field input{accent-color:var(--gold)}
+.dialog-foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.muted{color:var(--muted)}
+.hidden{display:none!important}
+
+@media(max-width:760px){.app{padding:13px}
+.top{align-items:flex-start;flex-wrap:wrap}
+.nav{order:3;width:100%;overflow:auto}
+.nav button{flex:1;padding:8px 10px}
+.summary{grid-template-columns:repeat(2,1fr)}
+.table{padding:16px 17px;border-radius:18px;min-height:390px}
+.trainer-grid{grid-template-columns:1fr}
+.trainer-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.trainer-side .panel{margin-top:0}
+.settings-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:520px){.card{width:58px;height:81px}
+.card .corner{font-size:17px}
+.card .pip{font-size:19px}
+.hand .card{width:49px;height:69px}
+.hand{min-width:145px}
+.trainer-side{grid-template-columns:1fr}
+.settings-grid{grid-template-columns:1fr}
+}
+
+/* The felt is arranged as a table: dealer, shoe, player seats. */
+.app{max-width:1210px}
+
+.summary{margin:13px 0 17px}
+
+.table{position:relative;overflow:hidden;min-height:455px;padding:23px 32px 15px;border:8px solid #765a3f;border-radius:46px;background:radial-gradient(ellipse at 50% 36%,#1d6150 0%,#124b3d 48%,#0d352d 100%);box-shadow:inset 0 0 0 3px #376d54,inset 0 0 70px #05251d88,0 22px 46px #03130f88}
+
+.table::before{content:"";position:absolute;left:8%;right:8%;top:97px;height:278px;border:2px solid #c7bc8470;border-radius:50%;pointer-events:none}
+
+.table::after{content:"";position:absolute;left:20%;right:20%;top:122px;height:230px;border:1px solid #b7c48d50;border-radius:50%;pointer-events:none}
+
+.dealer-zone,.table-center,.player-zone,.notice{position:relative;z-index:1}
+
+.dealer-zone{text-align:center;min-height:157px}
+
+.table-top{justify-content:center;gap:12px}
+
+.table-label{font-size:11px;letter-spacing:.18em;color:#d9e6d5}
+
+.dealer.cards{justify-content:center;min-height:122px;margin:10px 0 0}
+
+.cards{gap:0}
+
+.cards .card+.card{margin-left:-19px}
+
+.card{width:75px;height:103px;border-radius:8px;box-shadow:0 7px 12px #041b166e;transform-origin:bottom center}
+
+.card:nth-child(2n){transform:rotate(3deg)}
+
+.card:nth-child(3n){transform:rotate(-3deg)}
+
+.card .pip{font-size:28px}
+
+.card .pip{color:inherit}
+.card.red{color:#b33438}
+
+.rank-frequencies{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:5px;margin-top:12px}
+.rank-frequency{text-align:center;background:#143b30;border:1px solid #436c59;border-radius:8px;padding:8px 2px;font-size:12px}
+.rank-frequency strong,.rank-frequency small{display:block}
+.rank-frequency small{color:var(--muted);font-size:10px}
+@media(max-width:600px){.rank-frequencies{grid-template-columns:repeat(7,minmax(0,1fr))}
+}
+
+.card.dealt{animation:deal-in .38s both;animation-delay:var(--deal-delay,0ms)}
+
+.card.revealed{animation:flip-in .45s both}
+
+@keyframes deal-in{from{opacity:0;translate:0 -38px;scale:.78}
+to{opacity:1;translate:0 0;scale:1}
+}
+
+@keyframes flip-in{from{opacity:.45;transform:rotateY(85deg)}
+to{opacity:1;transform:rotateY(0)}
+}
+
+.table-center{height:106px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#d8c585;text-align:center}
+
+.table-arc{font-weight:800;letter-spacing:.26em;font-size:18px;text-shadow:0 2px 5px #123326}
+
+.table-arc span{font-size:10px;letter-spacing:.1em}
+
+.shoe-stack{position:relative;width:41px;height:31px;margin-top:4px}
+
+.shoe-stack span{position:absolute;left:4px;top:0;width:31px;height:22px;border:2px solid #d8e8d3;border-radius:4px;background:repeating-linear-gradient(45deg,#287663 0 4px,#174f42 4px 8px)}
+
+.shoe-stack span:nth-child(2){translate:2px 3px}
+.shoe-stack span:nth-child(3){translate:4px 6px}
+
+.shoe-caption{font-size:9px;letter-spacing:.17em;color:#bcceb8}
+
+.player-zone{min-height:140px}
+.player-header{justify-content:center;gap:12px}
+
+.hands{justify-content:center;align-items:flex-start;min-height:109px;gap:8px;margin-top:8px}
+
+.hand{min-width:182px;max-width:235px;text-align:center;padding:8px 10px 10px;border:1px solid #9bb48e63;border-radius:18px;background:#0c3b3199;box-shadow:inset 0 1px 0 #ffffff14}
+
+.hand.active{background:#28674fe6;border:2px solid #e5cb82;box-shadow:0 0 0 4px #d7be6a24,0 8px 22px #041e1694}
+
+.hand .cards{justify-content:center;flex-wrap:nowrap;margin:8px auto 5px;min-height:86px}
+
+.hand .card{width:62px;height:85px;flex:0 0 62px}
+
+.hand .cards .card+.card{margin-left:-26px}
+
+.hand .card .pip{font-size:19px}
+.hand .card .corner{font-size:17px}
+
+.hand-title{display:flex;align-items:center;justify-content:center;gap:7px;font-size:11px;letter-spacing:.03em}
+
+.bet-chip{display:inline-grid;place-items:center;min-width:42px;height:26px;border-radius:50%;padding:0 5px;border:2px dashed #f4d799;background:#9e413b;color:#fff8df;font-size:10px;font-variant-numeric:tabular-nums;box-shadow:0 2px 0 #692b2a,0 4px 6px #001a14a0}
+
+.hand small{display:block;white-space:nowrap;font-size:11px}
+
+.notice{text-align:center;min-height:28px;color:#edf4e9;font-weight:600;margin-top:2px}
+
+.toolbar{min-height:62px;padding:9px 10px;border:1px solid #4d7560;border-radius:12px;background:#0b2d25;box-shadow:0 12px 25px #071d17a0}
+
+#playControls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%;order:2}
+
+#playControls .action{min-width:0;white-space:nowrap}
+
+
+.action{min-height:41px}
+
+.review-panel{border-color:#7c8c63;background:#123629}
+
+.review-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+
+.review-heading h2{font-size:20px;margin:0}
+
+.eyebrow{display:block;color:var(--gold);text-transform:uppercase;letter-spacing:.15em;font-size:10px;font-weight:800}
+
+.review-badge{border:1px solid #769d75;border-radius:99px;padding:6px 10px;color:#e6ecd6;font-size:12px;white-space:nowrap}
+
+.review-steps{display:grid;gap:9px;margin-top:13px}
+
+.review-train{justify-self:start;margin-top:4px}
+
+.review-step{display:grid;grid-template-columns:102px minmax(0,1fr) auto;gap:12px;align-items:center;background:#0c2a22;border:1px solid #396450;border-radius:10px;padding:9px 12px}
+
+.review-step.good{border-left:4px solid #a7ca8d}
+.review-step.missed{border-left:4px solid #dfac71}
+
+.review-cards{color:#e1ddc9;font-weight:700;letter-spacing:.04em}
+.review-detail{font-size:13px;min-width:0}
+.review-detail strong{color:#f4dfa2}
+.review-detail small{display:block;color:#a9c7b4;margin-top:2px}
+.review-cost{font-size:12px;font-variant-numeric:tabular-nums;color:#f0c397;white-space:nowrap}
+
+.stats-heading{display:flex;justify-content:space-between;align-items:start;gap:15px}
+.stats-heading .section-intro{margin-bottom:8px}
+
+.stats-hero{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:13px 0}
+
+.stats-hero .stat{padding:17px 18px;border-color:#8a9b6a;background:linear-gradient(140deg,#1f4b37,#12372e)}
+
+.stats-hero .stat strong{font-size:29px;color:#efd28b}
+.stats-hero .stat small{display:block;color:#aec7b2;font-size:11px;margin-top:4px}
+
+.stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+
+.stats-columns{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(260px,1fr);gap:13px;margin-top:13px}
+
+.stats-columns .panel{margin-top:0}
+
+.bankroll-chart{height:186px;border-radius:9px;background:linear-gradient(#173d32,#0b2b24);padding:8px}
+
+.bankroll-chart svg{width:100%;height:100%;overflow:visible}
+
+.chart-labels{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:5px}
+
+.metric-list{display:grid;gap:0}
+.metric-list div{display:flex;justify-content:space-between;gap:15px;padding:6px 0;border-bottom:1px solid #ffffff17;font-size:13px}
+.metric-list div:last-child{border-bottom:0}
+.metric-list strong{font-variant-numeric:tabular-nums;color:#f1e2b7;text-align:right}
+
+.recent-rounds{display:grid;gap:6px;margin-top:12px}
+.recent-row{display:grid;grid-template-columns:76px 1fr 90px;gap:10px;padding:7px 9px;border:1px solid #365d4e;border-radius:8px;font-size:12px}
+.recent-row span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.positive{color:#b7df9e!important}
+.negative{color:#f0ac96!important}
+
+.coach-panel{border-color:#988b5f;background:linear-gradient(145deg,#173e31,#102c25)}
+
+.coach-heading{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.coach-heading h2{margin:0;font-size:20px}
+.coach-heading>strong{font-size:12px;color:#e4d396;text-align:right}
+
+.coach-progress{height:7px;border-radius:99px;background:#0a251d;margin:15px 0;overflow:hidden}
+.coach-progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#98bd86,#e8cc80);border-radius:inherit;transition:width .25s}
+
+.coach-report{display:grid;gap:10px;margin-top:12px}
+.coach-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.coach-metrics div{border:1px solid #4e7459;border-radius:9px;background:#0c3026;padding:9px 11px}
+.coach-metrics span{display:block;font-size:10px;color:#bbd0ba;text-transform:uppercase;letter-spacing:.08em}
+.coach-metrics strong{font-size:17px;color:#f3dfaa;font-variant-numeric:tabular-nums}
+
+.coach-trend{color:#d8e5d5;margin:2px 0!important}
+.coach-focus{border-left:3px solid #e7c776;background:#0c3027;padding:10px 12px;border-radius:0 9px 9px 0}
+.coach-focus strong{color:#f6dfa4}
+.coach-focus p{margin:4px 0 0!important}
+.coach-example{font-size:12px;color:#bed3c3!important}
+.coach-outcomes{font-size:11px;color:#9ebdaa!important}
+
+.coach-history{margin-top:12px}
+.coach-history details{border-top:1px solid #4a715b;padding-top:9px}
+.coach-history summary{cursor:pointer;color:#ecd59a;font-size:12px;font-weight:700}
+.coach-archive{border-bottom:1px solid #ffffff17;padding:10px 0}
+.coach-archive:last-child{border-bottom:0}
+.coach-archive h3{margin:0 0 5px;font-size:13px}
+.coach-empty{color:#bbccb9;font-size:13px}
+
+@media(max-width:760px){.table{min-height:400px;padding:18px 12px 12px;border-width:6px;border-radius:28px}
+.table::before{left:2%;right:2%;top:110px}
+.table::after{left:12%;right:12%;top:128px}
+.table-arc{font-size:14px;letter-spacing:.13em}
+.table-center{height:90px}
+.dealer-zone{min-height:142px}
+.stats-columns{grid-template-columns:1fr}
+.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.review-step{grid-template-columns:85px 1fr}
+.review-cost{grid-column:2}
+.nav button{white-space:nowrap}
+}
+
+@media(max-width:520px){.table{min-height:378px}
+.dealer-zone{min-height:128px}
+.card{width:63px;height:87px}
+.hand{min-width:135px;max-width:190px;padding:7px}
+.hand .card{width:47px;height:69px;flex-basis:47px}
+.hand .cards .card+.card{margin-left:-22px}
+.hand .card .pip{font-size:15px}
+.hand-title{font-size:10px}
+.bet-chip{min-width:34px;height:23px;font-size:9px}
+.stats-hero{grid-template-columns:1fr}
+.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.recent-row{grid-template-columns:48px 1fr 72px}
+.brand .muted{display:none}
+#playControls{gap:4px}
+#playControls .action{font-size:11px;padding:8px 2px}
+#playControls kbd{display:none}
+.coach-metrics{grid-template-columns:1fr 1fr}
+.coach-heading h2{font-size:17px}
+}
+
+.lesson{max-width:860px;margin:0 auto}
+.lesson-head{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:14px}
+.lesson-head h2{font-size:23px;margin:2px 0 0}
+.lesson-step-label{color:var(--gold);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:800}
+.lesson-dots{display:flex;gap:6px}
+.lesson-dots span{width:9px;height:9px;border-radius:50%;background:#4a7460}
+.lesson-dots span.active{background:var(--gold)}
+.lesson-copy{font-size:16px;line-height:1.6;max-width:70ch}
+.lesson-callout{border-left:3px solid var(--gold);background:#173c30;border-radius:0 9px 9px 0;padding:11px 14px;margin:14px 0;color:#f1e6c3}
+.lesson-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0}
+.lesson-value{border:1px solid #577765;background:#164034;border-radius:11px;padding:16px}
+.lesson-value strong{display:block;color:var(--gold);font-size:25px}
+.lesson-value span{display:block;font-size:17px;font-weight:750}
+.lesson-value small{color:#d1e0d3}
+.lesson-demo{display:grid;grid-template-columns:105px 1fr;gap:18px;align-items:center;margin:20px 0}
+.lesson-demo .card{margin:auto}
+.lesson-count{font-size:32px;color:var(--gold);font-weight:800;font-variant-numeric:tabular-nums}
+.lesson-trail{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}
+.lesson-trail span{background:#1d493a;border:1px solid #5d846c;border-radius:7px;padding:5px 9px;font-variant-numeric:tabular-nums}
+.lesson-controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:17px}
+.lesson-controls .ghost{min-width:92px}
+.lesson-practice{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:15px}
+.lesson-practice input{width:130px;background:#092820;color:#fff;border:1px solid #57806b;border-radius:8px;padding:10px}
+.lesson-feedback{min-height:24px;margin-top:10px;color:#f0d78e;font-weight:750}
+.lesson-complete{border:1px solid #79956c;border-radius:10px;padding:13px;background:#1c4836;margin-top:13px}
+@media(max-width:600px){.lesson-values{grid-template-columns:1fr}
+.lesson-demo{grid-template-columns:80px 1fr}
+.lesson-head h2{font-size:20px}
+}
+
+.training-heading,.training-question-head{display:flex;align-items:start;justify-content:space-between;gap:14px}
+.training-heading .section-intro{max-width:72ch}
+.training-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.training-grid{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:15px;align-items:start}
+.training-grid .panel{margin-top:14px}
+.training-stage{min-height:405px;padding:23px}
+.training-stage h2{font-size:22px;margin:5px 0 10px}
+.training-stage p{max-width:65ch}
+.training-stage .action{margin-top:12px}
+.training-question-head h2{margin:2px 0 0}
+.training-table{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:15px 0}
+.training-table>div{border:1px solid #5b8b73;background:#174638;border-radius:16px;padding:16px;min-height:148px}
+.training-table .cards{margin:9px 0 0}
+.training-table .card{width:64px;height:88px}
+.training-table .card .corner{font-size:18px}
+.training-table .card .pip{font-size:20px}
+.training-prompt{font-weight:800;color:#f4e5b8!important;font-size:17px}
+.training-choices{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.training-choices .action{min-width:0;margin:0}
+.training-choices .action:disabled{opacity:.5}
+.training-feedback{margin-top:17px;border:1px solid #c3a96a;border-radius:11px;background:#243d30;padding:14px}
+.training-feedback.correct{border-color:#95bc7e}
+.training-feedback.wrong{border-color:#c58b78}
+.training-feedback strong{display:block;color:#f4dfab;font-size:17px}
+.training-feedback p{margin:6px 0}
+.training-feedback small{color:#bcd3c1}
+.training-next-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.training-next-row .action{margin:0}
+.training-pattern{display:block;text-align:left;width:100%;background:#153a30;color:var(--ink);border:1px solid #496e5c;border-radius:9px;padding:10px;margin-top:9px}
+.training-pattern:hover,.training-pattern.active{border-color:var(--gold);background:#1c4b3a}
+.training-pattern strong,.training-pattern small{display:block}
+.training-pattern small{color:var(--muted);margin-top:4px}
+.training-trend-value{font-size:23px;color:var(--gold);font-weight:800}
+.training-trend-detail{font-size:13px;color:#d2dfd2}
+.training-side .panel h2{margin:0}
+.training-empty-note{color:var(--muted);font-size:13px}
+@media(max-width:860px){.training-grid{grid-template-columns:1fr}
+.training-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.training-side .panel{margin-top:0}
+.training-choices{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:560px){.training-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+.training-side{grid-template-columns:1fr}
+.training-heading{align-items:start}
+.training-heading .pill{font-size:10px}
+.training-stage{padding:16px}
+.training-table>div{padding:11px}
+.training-table .card{width:55px;height:77px}
+.training-table .card .pip{font-size:17px}
+}
+
+.training-heading{flex-wrap:wrap}
+
+.beginner-heading{display:flex;justify-content:space-between;align-items:end;gap:14px;flex-wrap:wrap}
+.beginner-heading h2{margin:0}
+.beginner-controls{display:flex;gap:9px;align-items:end;flex-wrap:wrap}
+.beginner-stage{display:grid;place-items:center;min-height:225px;margin:18px 0 12px;border:1px solid #57836d;border-radius:18px;background:radial-gradient(ellipse,#205b46,#123a2f);padding:20px}
+.beginner-stage .card{width:102px;height:142px;margin:0}
+.beginner-stage .corner{font-size:29px}
+.beginner-stage .pip{font-size:36px}
+.beginner-stage .bottom{font-size:26px}
+.beginner-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.beginner-values button{min-width:0;padding:12px 7px}
+.beginner-values strong,.beginner-values small{display:block}
+.beginner-values strong{font-size:24px}
+.beginner-values small{font-size:11px;font-weight:500;margin-top:3px;color:#d7e5d9}
+.beginner-feedback{min-height:65px;margin:14px 0 0;border-left:3px solid #6d947b;padding:8px 12px;background:#153e31;border-radius:0 8px 8px 0}
+.beginner-feedback.correct{border-color:#a6d391}
+.beginner-feedback.wrong{border-color:#e2a490}
+.beginner-feedback strong{display:block;color:var(--gold)}
+.beginner-feedback p{margin:3px 0;font-size:13px}
+.beginner-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:16px}
+.beginner-progress{height:5px;background:#254e3d;border-radius:5px;overflow:hidden}
+.beginner-progress span{display:block;height:100%;width:0;background:var(--gold);transition:width .15s}
+.segmented{flex-wrap:wrap}
+@media(max-width:550px){.beginner-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+.beginner-values button{font-size:12px}
+}
+
+.reset-session{border-color:#936d64;color:#f0d1c9}
+.side-panel{position:relative;z-index:1;border-top:1px solid #d2c88a66;margin-top:14px;padding-top:10px}
+.side-grid{display:flex;justify-content:center;gap:22px;flex-wrap:wrap;margin:0 auto}
+.side-spot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:124px;height:124px;border:2px solid #b5bd8b;border-radius:50%;background:#0d3f32b0;color:#f5eed0;cursor:pointer;text-align:center;box-shadow:inset 0 0 0 5px #164b3b,0 3px 12px #04251e4d}
+.side-spot-number{font-size:19px;font-weight:850;line-height:1;color:#f4d98b}
+.side-spot-name{font-size:10px;font-weight:800;letter-spacing:.075em;line-height:1.2;text-transform:uppercase;max-width:103px}
+.side-chip{display:block;border:1px solid #f4d99b;border-radius:99px;padding:2px 8px;font-size:11px;font-weight:800;font-variant-numeric:tabular-nums;color:#fff4d5;background:#9e413b}
+.side-spot[aria-pressed="true"]{border-color:#ffe1a1;background:#25624a;box-shadow:inset 0 0 0 5px #164b3b,0 0 0 4px #edcc7638}
+.side-spot:not(:disabled):hover{border-color:#ffe7af;background:#205943}
+.side-spot:focus-visible{outline:2px solid #ffe8a3;outline-offset:4px}
+.side-spot:disabled{opacity:.6;cursor:default}
+.side-card{min-width:0;background:#153b30;border:1px solid #4b715e;border-radius:11px;padding:13px}
+.side-card h3{margin:0 0 10px;font-size:15px}
+.side-details-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.side-details-head h2{margin:0;font-size:17px}
+.side-details-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0}
+.side-detail-card{min-width:0;padding:15px;background:#12372d;border:1px solid #446d56;border-radius:11px}
+.side-detail-card h3{margin:0 0 5px;font-size:15px;color:#ead9a3}
+.side-detail-card .help{line-height:1.45}
+.side-state{min-height:16px;font-size:12px;color:#bcd2bc;margin:6px 0}
+.side-config-row{display:grid;grid-template-columns:100px minmax(0,1fr);gap:10px;margin:12px 0}
+.side-config-row input,.side-config-row select{width:100%;min-width:0}
+.side-config-row .field{min-width:0}
+.side-pays{font-size:12px;margin-top:10px}
+.side-pays div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #345c4d;padding:5px 0}
+.side-pays strong{white-space:nowrap}
+.side-risk{color:#ebc5a3!important;font-size:12px}
+.side-total{margin:8px 0;font-weight:700;font-size:13px;color:#eadfb9}
+.side-result{border-left:3px solid #688773;padding:9px 12px;background:#173c30;border-radius:0 7px 7px 0;margin-top:7px}
+.side-result.win{border-color:#dbc176}
+.side-result strong,.side-result small{display:block}
+.side-result small{color:var(--muted)}
+.side-stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+.side-stat-grid .metric-list{font-size:12px}
+@media(max-width:800px){.side-stat-grid{grid-template-columns:1fr}}
+@media(max-width:800px){.side-details-grid{grid-template-columns:1fr}}
+@media(max-width:580px){.side-grid{gap:7px}.side-spot{width:94px;height:94px}.side-spot-number{font-size:16px}.side-spot-name{font-size:9px;max-width:80px}.side-config-row{grid-template-columns:92px minmax(0,1fr)}}
+.insurance-row button::after{display:inline-block;margin-left:8px;border:1px solid currentColor;border-radius:4px;padding:0 4px;font-size:11px;opacity:.75}
+.insurance-row #takeInsurance::after{content:"A"}
+.insurance-row #declineInsurance::after{content:"D"}
+
+/* Shared online table lobby and seats. */
+.multi-intro{max-width:760px}
+.multi-grid{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:16px}
+.multi-lobby{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:end}
+.multi-lobby .field input{width:100%;background:#092820;color:#fff;border:1px solid #57806b;border-radius:8px;padding:9px}
+.multi-actions{display:flex;gap:8px;flex-wrap:wrap}
+.multi-status{min-height:24px;color:var(--gold);margin:11px 0 0}
+.multi-code{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.multi-code strong{font-size:21px;letter-spacing:.18em;color:var(--gold)}
+.multi-table{background:radial-gradient(ellipse at center,#174c3f 0,#10392f 67%,#0c2e26 100%);border:7px solid #765a3f;border-radius:30px;padding:20px;box-shadow:inset 0 0 0 2px #376d54,0 20px 50px #03130f66}
+.multi-dealer{min-height:150px;text-align:center}
+.multi-dealer .cards{justify-content:center}
+.multi-turn{color:var(--gold);font-weight:750;text-align:center;min-height:26px;margin:4px 0 12px}
+.multi-players{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.multi-seat{border:1px solid #39685a;border-radius:13px;padding:12px;background:#0d2c25;min-height:150px}
+.multi-seat.active{border-color:var(--gold);box-shadow:0 0 0 1px #e8c47755}
+.multi-seat-head{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.multi-seat-name{font-weight:750}.multi-seat .cards{margin:9px 0 4px}.multi-seat .card{width:50px;height:70px;padding:5px 4px}.multi-seat .card .corner{font-size:15px}.multi-seat .card .pip{font-size:17px}.multi-seat .card .bottom{font-size:14px}
+.multi-hands{display:flex;gap:8px;flex-wrap:wrap}.multi-hand{border-left:2px solid transparent;padding-left:7px}.multi-hand.active{border-color:var(--gold)}
+.multi-betbar{display:flex;align-items:end;gap:9px;flex-wrap:wrap;margin-top:17px;padding-top:15px;border-top:1px solid #5a87715c}
+.multi-betbar input{width:100px;background:#092820;color:#fff;border:1px solid #57806b;border-radius:8px;padding:9px}
+.multi-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.multi-rules{align-self:start}
+.multi-rules ul{padding-left:19px;color:#d5dfd5;font-size:13px;margin:10px 0}
+.multi-rules li+li{margin-top:6px}
+.multi-empty{color:var(--muted);padding:22px 4px;text-align:center}
+@media(max-width:760px){.multi-grid{grid-template-columns:1fr}.multi-lobby{grid-template-columns:1fr}.multi-players{grid-template-columns:1fr}}
+
+@media(prefers-reduced-motion:reduce){.card.dealt,.card.revealed{animation:none}
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top"><div class="brand"><span class="mark">♠</span> Blackjack <span class="muted">/ Table & Trainer</span></div><div class="top-right"><button class="ghost reset-session" id="resetSession">Reset session</button><button class="ghost" id="settingsOpen">Settings</button></div><nav class="nav" aria-label="Modes"><button data-tab="play" class="active">Play</button><button data-tab="multi">Multiplayer</button><button data-tab="training">My Training</button><button data-tab="trainer">Count Trainer</button><button data-tab="stats">Statistics</button></nav></header>
+  <div class="summary"><div class="stat"><span>Bankroll</span><strong id="bankroll"></strong></div><div class="stat"><span>Current bet</span><strong id="currentBet"></strong></div><div class="stat"><span>Shoe remaining</span><strong id="remaining"></strong></div><div class="stat"><span>Penetration</span><strong id="penetration"></strong></div></div>
+  <main>
+    <section class="view" id="view-multi"><h1 class="section-title">Multiplayer table</h1><p class="section-intro multi-intro">Play one shared shoe with friends on separate computers. Create a room, send the short code, and everyone places a bet before the host deals.</p>
+      <div id="multiLobby" class="panel"><div class="multi-lobby"><label class="field" for="multiName">Your name<input id="multiName" maxlength="24" placeholder="Player" autocomplete="nickname"></label><label class="field" for="multiRoomInput">Room code<input id="multiRoomInput" maxlength="8" placeholder="ABC123" autocapitalize="characters"></label><div class="multi-actions"><button class="action primary" id="multiCreate">Create room</button><button class="action" id="multiJoin">Join room</button></div></div><div id="multiStatus" class="multi-status" role="status">Multiplayer server is not configured yet.</div></div>
+      <div id="multiBoard" class="multi-grid hidden"><div class="multi-table"><div class="multi-dealer"><div class="table-label">Dealer</div><div id="multiDealerCards" class="cards dealer"></div><span id="multiDealerScore" class="pill">—</span></div><div id="multiTurn" class="multi-turn"></div><div id="multiPlayers" class="multi-players"></div><div class="multi-betbar"><label class="field" for="multiBetInput">Your main bet<input id="multiBetInput" type="number" min="10" max="500" step="1" value="10"></label><button class="action" id="multiPlaceBet">Place / update bet</button><button class="action primary" id="multiStart">Deal round</button><button class="ghost" id="multiCopy">Copy room code</button><button class="ghost" id="multiLeave">Leave room</button></div><div id="multiControls" class="multi-controls"><button class="action primary" id="multiHit">Hit <kbd>H</kbd></button><button class="action" id="multiStand">Stand <kbd>S</kbd></button><button class="action" id="multiDouble">Double <kbd>D</kbd></button><button class="action" id="multiSplit">Split <kbd>P</kbd></button></div><div id="multiRoomCode" class="multi-code"></div></div><aside class="panel multi-rules"><h2>How the room works</h2><ul><li>One real shuffled six-deck shoe is shared by everyone.</li><li>Every seated player must place a valid bet before the host deals.</li><li>Players act one at a time; your legal controls unlock when it is your turn.</li><li>The first person to create the room is the host and can deal or reset it.</li></ul><p class="help">This multiplayer room is a practice table with play-money bankrolls. It does not connect to a casino or process payments.</p></aside></div>
+    </section>
+    <section class="view active" id="view-play"><div id="playHost"></div><div id="playCoach" class="panel coach-panel hidden" aria-live="polite"><div class="coach-heading"><div><span class="eyebrow">25-hand checkpoint</span><h2 id="playCoachTitle">Your play trend</h2></div><button class="ghost" id="coachSeeStats">See history</button></div><div id="playCoachBody"></div></div></section>
+    <section class="view" id="view-training"><div class="training-heading"><div><h1 class="section-title">My training</h1><p class="section-intro">A personal practice deck built from decisions you missed in this session. It tracks choices, not whether luck made the hand win or lose.</p></div><span id="trainingFocusBadge" class="pill">All mistakes</span></div>
+      <div class="training-stats"><div class="stat"><span>Decisions seen</span><strong id="trainingDecisions">0</strong></div><div class="stat"><span>Missed choices</span><strong id="trainingMisses">0</strong></div><div class="stat"><span>Practice accuracy</span><strong id="trainingAccuracy">—</strong></div><div class="stat"><span>Situations mastered</span><strong id="trainingMastered">0 / 0</strong></div></div>
+      <div class="training-grid"><div class="panel training-stage"><div id="trainingEmpty"><span class="eyebrow">Your practice deck is empty</span><h2>Play a hand to begin</h2><p>After each completed hand, any choice that was below the best legal action becomes a practice question here. A lost hand with good decisions will not be counted as a mistake.</p><button class="action primary" id="trainingGoPlay">Go to Play</button></div>
+        <div id="trainingQuestion" class="hidden"><div class="training-question-head"><div><span class="eyebrow">Replay a missed decision</span><h2 id="trainingQuestionTitle">What would you do?</h2></div><span id="trainingQuestionCount" class="pill"></span></div><p id="trainingContext" class="help"></p><div class="training-table"><div><span class="table-label">Dealer shows</span><div id="trainingDealer" class="cards"></div></div><div><span class="table-label">Your hand</span><div id="trainingPlayer" class="cards"></div></div></div><p class="training-prompt">What is the best legal action?</p><div id="trainingChoices" class="training-choices"></div><div id="trainingFeedback" class="training-feedback hidden" role="status"></div><div class="training-next-row"><button class="action primary hidden" id="trainingNext">Next situation <kbd>N</kbd></button><button class="ghost hidden" id="trainingAll">Practise all mistakes</button></div></div></div>
+        <aside class="training-side"><div class="panel"><h2>Decision trend</h2><div id="trainingTrend"></div><p class="help">Compares your last 10 recorded decisions with the 10 before them once there is enough data. A short streak is not proof of a lasting change.</p></div><div class="panel"><div class="training-question-head"><h2>Focus areas</h2><span id="trainingPatternCount" class="muted"></span></div><div id="trainingPatterns"></div></div></aside></div><p class="help">Practice uses the rules and legal actions recorded for each situation. It does not change your bankroll, shoe, or live-play statistics. Practice progress resets when session statistics reset or the page reloads.</p>
+    </section>
+    <section class="view" id="view-trainer"><h1 class="section-title">Count trainer</h1><p class="section-intro">Start by recognising each card’s Hi-Lo value, then learn to keep a running count.</p><div class="segmented"><button class="active" data-trainer="beginner">Beginner Cards</button><button data-trainer="learn">Learn Hi-Lo</button><button data-trainer="live">Live Play</button><button data-trainer="drill">Speed Drill</button></div>
+      <div id="trainerBeginner" class="panel">
+        <div class="beginner-heading"><div><span class="eyebrow">Step zero · recognise the card</span><h2>What is this card worth in Hi-Lo?</h2></div><div class="beginner-controls"><label class="field" for="beginnerDecks">Practice decks<select id="beginnerDecks"><option value="1">1 deck · 52 cards</option><option value="2">2 decks · 104 cards</option><option value="4">4 decks · 208 cards</option><option value="6">6 decks · 312 cards</option><option value="8">8 decks · 416 cards</option></select></label><button class="action primary" id="beginnerStart">Start deck</button></div></div>
+        <p class="help">Answer this card’s value, not the running total or its blackjack points. Each answer flips to the next card; feedback below refers to the card you just answered. Changing decks applies to your next run.</p>
+        <div id="beginnerStage" class="beginner-stage" aria-label="Current card"></div>
+        <p id="beginnerProgressText" class="help">Choose your decks and start.</p><div class="beginner-progress" aria-hidden="true"><span id="beginnerProgress"></span></div>
+        <div class="beginner-values" aria-label="Choose this card’s Hi-Lo value"><button class="action" id="beginnerPlus" data-beginner-value="1" aria-keyshortcuts="ArrowUp"><strong>+1 <kbd>↑</kbd></strong><small>Low cards: 2–6</small></button><button class="action" id="beginnerZero" data-beginner-value="0" aria-keyshortcuts="ArrowLeft ArrowRight"><strong>0 <kbd>← →</kbd></strong><small>Middle cards: 7–9</small></button><button class="action" id="beginnerMinus" data-beginner-value="-1" aria-keyshortcuts="ArrowDown"><strong>−1 <kbd>↓</kbd></strong><small>High cards: 10, J, Q, K, A</small></button></div>
+        <div id="beginnerFeedback" class="beginner-feedback" role="status" aria-live="polite"></div>
+        <div class="beginner-metrics"><div class="stat"><span>This run accuracy</span><strong id="beginnerAccuracy">—</strong></div><div class="stat"><span>Correct streak</span><strong id="beginnerStreak">0</strong></div><div class="stat"><span>Actual running count</span><strong id="beginnerCount">0</strong></div><div class="stat"><span>Session accuracy</span><strong id="beginnerSessionAccuracy">—</strong></div></div>
+        <p class="help">The displayed running count uses the correct card values, even if you miss an answer. This drill has its own shuffled shoe and does not change your game or bankroll. A full deck’s Hi-Lo values add up to zero.</p>
+      </div>
+      <div id="trainerLearn" class="lesson panel hidden"><div class="lesson-head"><div><span id="lessonStepLabel" class="lesson-step-label">Step 1 of 4</span><h2 id="lessonTitle">What are you counting?</h2></div><div id="lessonDots" class="lesson-dots" aria-hidden="true"><span></span><span></span><span></span><span></span></div></div>
+        <div data-lesson-step="0"><p class="lesson-copy">You are not adding up the points in your own hand. A <strong>running count</strong> is one small number that tracks cards everyone has seen from the shoe.</p><div class="lesson-callout">Start at <strong>0</strong> when a new shoe is shuffled. Change that number as cards appear. Keep it across hands; reset it only when the shoe is reshuffled.</div><p class="lesson-copy">Count your cards and the dealer’s visible card as they appear. Count the dealer’s face-down card only after it is turned over. The count is a practice tool, not a guarantee of winning.</p></div>
+        <div data-lesson-step="1" class="hidden"><p class="lesson-copy">Give each <em>rank</em> a tiny value. Suits do not matter. This Hi-Lo value is different from a card’s blackjack point value.</p><div class="lesson-values"><div class="lesson-value"><span>2, 3, 4, 5, 6</span><strong>+1</strong><small>Low card seen → add one</small></div><div class="lesson-value"><span>7, 8, 9</span><strong>0</strong><small>Middle card seen → no change</small></div><div class="lesson-value"><span>10, J, Q, K, A</span><strong>−1</strong><small>High card seen → subtract one</small></div></div><div class="lesson-callout">Why does a low card add one? Once it is gone, the unseen cards contain a slightly higher share of 10s and aces, which can make blackjacks. A positive count points to relatively more high cards unseen; a negative count points to relatively more low cards unseen; zero is balanced. It does <strong>not</strong> predict the next card or guarantee a win.</div><p class="lesson-copy">Memory hook: <strong>low adds, middle stays, high subtracts.</strong></p></div>
+        <div data-lesson-step="2" class="hidden"><p class="lesson-copy">Watch a short shoe in slow motion. Begin at zero, then reveal one card at a time.</p><div class="lesson-demo"><div id="lessonExampleCard" aria-live="polite"></div><div><div id="lessonExampleCount" class="lesson-count">0</div><div id="lessonExampleExplanation">No cards revealed yet.</div></div></div><div id="lessonExampleTrail" class="lesson-trail"></div><button class="action primary" id="lessonReveal">Reveal next card</button><p class="help">The running count continues into the next hand until the shoe is shuffled.</p></div>
+        <div data-lesson-step="3" class="hidden"><p class="lesson-copy">Your turn. For each card, enter the <strong>new running count</strong>, not just the card’s value. The practice sequence starts at zero.</p><div class="lesson-demo"><div id="lessonPracticeCard"></div><div><div id="lessonPracticeProgress" class="lesson-step-label"></div><div id="lessonPracticeContext">Previous count: 0</div></div></div><form id="lessonPracticeForm" class="lesson-practice"><label for="lessonPracticeGuess">New count</label><input id="lessonPracticeGuess" type="number" step="1" required><button id="lessonPracticeCheck" class="action primary" type="submit">Check</button><button id="lessonPracticeNext" class="ghost" type="button" disabled>Next card</button></form><div id="lessonPracticeFeedback" class="lesson-feedback" role="status"></div><div id="lessonPracticeFinish" class="lesson-complete hidden"><strong>Nice work — you followed the count across multiple cards.</strong><p>Now try Live Play with “Show running count” on, then hide it when ready. Speed Drill is for faster practice.</p><div class="lesson-controls"><button class="action primary" id="lessonGoLive">Try Live Play</button><button class="ghost" id="lessonGoDrill">Try Speed Drill</button><button class="ghost" id="lessonRestart">Practice again</button></div></div></div>
+        <div class="lesson-controls"><button class="ghost" id="lessonBack" disabled>Back</button><button class="action primary" id="lessonForward">Next step</button></div></div>
+      <div id="trainerLive" class="trainer-grid hidden"><div id="liveHost"></div><aside class="trainer-side"><div class="panel"><h2>Check my count</h2><p>Count every exposed card, including the dealer’s hole card once revealed.</p><label class="switch-row"><input type="checkbox" id="showLiveCount"> Show running count</label><p id="liveCountValue" class="hidden">Running count: <strong></strong></p><div class="check-form"><input id="countGuess" type="number" step="1" placeholder="Your count" aria-label="Your running count"><button class="action primary" id="checkCount">Check</button></div><div id="countResult" class="check-result" aria-live="polite"></div><p id="countAccuracy" class="help">Accuracy: 0/0</p></div><div class="panel"><h2>Hi-Lo reference</h2><div class="ref"><div><span>2–6</span><strong>+1</strong></div><div><span>7–9</span><strong>0</strong></div><div><span>10–Ace</span><strong>−1</strong></div></div></div></aside></div>
+      <div id="trainerDrill" class="hidden"><div class="panel"><div class="drill-settings"><label class="field">Cards<select id="drillLength"><option>10</option><option selected>20</option><option>30</option><option>52</option></select></label><label class="field">Flash speed<select id="drillSpeed"><option value="300">0.3 s</option><option value="500">0.5 s</option><option value="800" selected>0.8 s</option><option value="1200">1.2 s</option><option value="2000">2 s</option></select></label><label class="field">Cards at once<select id="drillGroup"><option>1</option><option>2</option><option>3</option></select></label><button class="action primary" id="startDrill">Start drill</button></div><label class="switch-row" style="margin-top:14px"><input type="checkbox" id="showDrillCount"> Show running count while learning</label><div class="drill-stage" id="drillStage"><div><div class="big">Ready?</div><div class="drill-progress">Choose your pace and start.</div></div></div><div class="drill-answer"><input type="number" step="1" id="drillGuess" placeholder="Final count" aria-label="Final running count" disabled><button class="action" id="submitDrill" disabled>Check count</button><span id="drillFeedback" aria-live="polite"></span></div><div class="drill-metrics"><div class="stat"><span>Streak</span><strong id="drillStreak">0</strong></div><div class="stat"><span>Session accuracy</span><strong id="drillAccuracy">0/0</strong></div></div></div></div>
+    </section>
+    <section class="view" id="view-stats">
+      <div class="stats-heading"><div><h1 class="section-title">Session statistics</h1><p class="section-intro">Since this page was opened. Bankroll saves locally; these statistics reset on reload.</p></div><button class="ghost" id="resetStats">Reset statistics</button></div>
+      <div class="stats-hero"><div class="stat"><span>Session result</span><strong id="statNet">£0.00</strong><small id="statYield">0% return on wagers</small></div><div class="stat"><span>Win rate</span><strong id="statWinRate">—</strong><small>Wins / all settled hands, including pushes</small></div><div class="stat"><span>Best decisions</span><strong id="statDecisionRate">—</strong><small>Optimal choices / decisions</small></div></div>
+      <div class="panel coach-panel"><div class="coach-heading"><div><span class="eyebrow">Personal strategy coach</span><h2>Every 25 completed hands</h2></div><strong id="coachNext">25 hands to go</strong></div><div class="coach-progress" aria-hidden="true"><span id="coachProgress"></span></div><div id="coachLatest" class="coach-latest"></div><div id="coachHistory" class="coach-history"></div></div>
+      <div class="stats-grid"><div class="stat"><span>Opening bankroll</span><strong id="statOpening">—</strong></div><div class="stat"><span>Current bankroll</span><strong id="statCurrent">—</strong></div><div class="stat"><span>Rounds played</span><strong id="statRounds">0</strong></div><div class="stat"><span>Hands played</span><strong id="statHands">0</strong></div><div class="stat"><span>Wins</span><strong id="statWins">0</strong></div><div class="stat"><span>Losses</span><strong id="statLosses">0</strong></div><div class="stat"><span>Pushes</span><strong id="statPushes">0</strong></div><div class="stat"><span>Blackjacks</span><strong id="statBlackjacks">0</strong></div></div>
+      <div class="stats-columns"><div class="panel chart-panel"><h2>Bankroll path</h2><div id="bankrollChart" class="bankroll-chart"></div><div class="chart-labels"><span id="chartStart">—</span><span id="chartEnd">—</span></div></div><div class="panel"><h2>Table activity</h2><div class="metric-list" id="tableActivity"></div></div></div>
+      <div class="panel"><h2>Cards &amp; opening deals</h2><div id="dealStats" class="metric-list"></div><div id="rankFrequencies" class="rank-frequencies" aria-label="Exposed card counts by rank"></div><p class="help" id="dealBaseline"></p><p class="help">Opening deals count your original two cards once per round, not split hands. Rank totals include player and revealed dealer cards from completed rounds only. Short sessions can vary substantially; the shuffle never forces a target frequency.</p></div>
+      <div class="stats-columns"><div class="panel"><h2>Decision quality</h2><div class="metric-list" id="decisionStats"></div><p class="help">EV missed estimates the cost of choices versus the best legal action at each decision, independent of actual luck.</p></div><div class="panel"><h2>Count practice</h2><div class="metric-list" id="countStats"></div></div></div>
+      <div class="panel"><h2>Recent rounds</h2><div id="recentRounds" class="recent-rounds"></div></div>
+      <div class="panel"><h2>Side bets vs blackjack</h2><div id="sideStatsTotals" class="metric-list"></div><div id="sideStatsCards" class="side-stat-grid"></div><p class="help">These are actual results from completed rounds, not proof of an edge. Main-hand win rate and decision accuracy exclude side bets. Overall bankroll, round streaks and return on wagers include all bets, including insurance.</p></div>
+    </section>
+  </main>
+  <div id="gameSurface">
+    <div class="table" id="feltTable">
+      <div class="dealer-zone"><div class="table-top"><span class="table-label">Dealer hand</span><span class="pill" id="dealerScore">—</span></div><div id="dealerCards" class="cards dealer"></div></div>
+      <div class="table-center"><div class="table-arc">BLACKJACK <span>✦</span> <span id="tableRuleText">PAYS 3:2 · STAND ON 17</span></div><div class="shoe-stack" aria-hidden="true"><span></span><span></span><span></span></div><div class="shoe-caption">THE SHOE</div></div>
+      <div class="player-zone"><div class="player-header"><span class="table-label">Your seat</span><span class="pill" id="roundState">Place bet</span></div><div id="hands" class="hands"></div></div>
+      <section id="sideBetPanel" class="side-panel" aria-label="Optional side bets">
+        <div class="side-grid">
+          <button id="sidePerfectToggle" type="button" class="side-spot" data-side-toggle="perfectPairs" aria-keyshortcuts="1" aria-pressed="false"><span class="side-spot-number">1</span><span class="side-spot-name">Perfect Pairs</span><span id="sidePerfectChip" class="side-chip hidden"></span></button>
+          <button id="sideThreeToggle" type="button" class="side-spot" data-side-toggle="twentyOneThree" aria-keyshortcuts="2" aria-pressed="false"><span class="side-spot-number">2</span><span class="side-spot-name">21+3</span><span id="sideThreeChip" class="side-chip hidden"></span></button>
+          <button id="sideLuckyToggle" type="button" class="side-spot" data-side-toggle="luckyLucky" aria-keyshortcuts="3" aria-pressed="false"><span class="side-spot-number">3</span><span class="side-spot-name">Lucky Lucky</span><span id="sideLuckyChip" class="side-chip hidden"></span></button>
+        </div>
+      </section>
+      <div class="notice" id="message" role="status"></div>
+    </div>
+    <div class="toolbar"><div class="bet-row" id="betControls"><label for="betInput">Bet £</label><input id="betInput" type="number" min="1" step="1"><button class="action primary" id="dealBtn">Deal <kbd>N</kbd></button></div><div id="insuranceControls" class="insurance-row hidden"><span>Insurance up to half your bet?</span><button class="action danger" id="takeInsurance">Take insurance</button><button class="action primary" id="declineInsurance">Decline</button></div><div id="playControls" class="hidden"><button class="action" data-action="hit">Hit <kbd>H</kbd></button><button class="action" data-action="stand">Stand <kbd>S</kbd></button><button class="action" data-action="double">Double <kbd>D</kbd></button><button class="action" data-action="split">Split <kbd>P</kbd></button></div></div>
+    <div id="sideResultPanel" class="panel hidden" role="status"><h2>Side bets · opening deal</h2><div id="sideResults"></div><p class="help">Settled before your player decisions. Returned amounts include your original side stake; profit/loss is shown separately.</p></div>
+    <div id="reviewPanel" class="panel review-panel hidden" aria-live="polite"><div class="review-heading"><div><span class="eyebrow">Hand complete</span><h2>How you played</h2></div><span class="review-badge" id="reviewBadge"></span></div><p id="reviewSummary"></p><div id="reviewSteps" class="review-steps"></div><p class="help">The best action is based on information available at the time, not actual luck. This is finite-deck basic strategy, not count-based play; split EV approximates depletion across other split hands.</p></div>
+    <section id="sideBetDetails" class="panel side-details" aria-labelledby="sideBetTitle">
+      <div class="side-details-head"><h2 id="sideBetTitle">Side bets · <span id="sideStakeSummary">£0.00</span></h2><button id="clearSideBets" type="button" class="ghost" aria-keyshortcuts="X">Clear all <kbd>X</kbd></button></div>
+      <p id="sideKeyboardHelp" class="help">Click a numbered spot on the table or press 1 / 2 / 3. The first wager is £5 (up to the table maximum); later taps reuse your last amount. Change amounts below. X clears all side bets.</p>
+      <p id="sideTotalStake" class="side-total" role="status"></p>
+      <div class="side-details-grid">
+        <article class="side-detail-card"><h3>Perfect Pairs</h3><p id="sidePerfectDescription" class="help"></p><p id="sidePerfectState" class="side-state"></p><div class="side-config-row"><label class="field">Wager £<input id="sidePerfectStake" type="number" min="0" step="0.01" value="0" aria-label="Perfect Pairs wager"></label><label class="field">Payout preset<select id="sidePerfectProfile" aria-label="Perfect Pairs payout preset"></select></label></div><p id="sidePerfectOdds" class="help"></p><div id="sidePerfectPays" class="side-pays"></div></article>
+        <article class="side-detail-card"><h3>21+3</h3><p id="sideThreeDescription" class="help"></p><p id="sideThreeState" class="side-state"></p><div class="side-config-row"><label class="field">Wager £<input id="sideThreeStake" type="number" min="0" step="0.01" value="0" aria-label="21+3 wager"></label><label class="field">Payout preset<select id="sideThreeProfile" aria-label="21+3 payout preset"></select></label></div><p id="sideThreeOdds" class="help"></p><div id="sideThreePays" class="side-pays"></div></article>
+        <article class="side-detail-card"><h3>Lucky Lucky</h3><p id="sideLuckyDescription" class="help"></p><p id="sideLuckyState" class="side-state"></p><div class="side-config-row"><label class="field">Wager £<input id="sideLuckyStake" type="number" min="0" step="0.01" value="0" aria-label="Lucky Lucky wager"></label><label class="field">Payout preset<select id="sideLuckyProfile" aria-label="Lucky Lucky payout preset"></select></label></div><p id="sideLuckyOdds" class="help"></p><div id="sideLuckyPays" class="side-pays"></div></article>
+      </div>
+      <p class="side-risk">These payout schedules have a house advantage on a fresh shoe. Leaving side bets at £0 protects your basic strategy bankroll.</p>
+      <details><summary>How these side bets work</summary><p class="help">Each side wager requires a main bet. Only the highest matching category pays. A 9:1 win returns £9 profit plus the original £1 stake. Side bets settle from your first two cards and, where specified, the dealer’s upcard. Hits and splits do not create new side bets; a voided round refunds all wagers.</p><p class="help">The displayed odds use the selected deck count at the start of a fresh shoe. Casinos can use different payout schedules and limits. The presets here follow Wizard of Odds Perfect Pairs version 1, 21+3 versions 1 and 7, and Lucky Lucky table 1; progressive jackpots are not included. Wager amounts repeat until cleared and reset to £0 on reload. Payout presets save locally.</p></details>
+    </section>
+    <p class="help">Keys: H hit · S stand · D double · P split · N new hand · 1 Perfect Pairs · 2 21+3 · 3 Lucky Lucky · X clear side bets (before dealing). Settings and bankroll save locally when storage is available.</p>
+  </div>
+</div>
+<div class="modal" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="dialog"><div class="dialog-head"><h2 id="settingsTitle">Table settings</h2><button class="ghost" id="settingsClose" aria-label="Close settings">×</button></div><form id="settingsForm"><div class="settings-grid"><label class="field">Decks<select name="decks"><option>1</option><option>2</option><option>4</option><option>6</option><option>8</option></select></label><label class="field">Dealer soft 17<select name="soft17"><option value="false">Stand (S17)</option><option value="true">Hit (H17)</option></select></label><label class="field">Blackjack payout<select name="payout"><option value="1.5">3:2</option><option value="1.2">6:5</option></select></label><label class="field">Double on<select name="doubleRule"><option value="any">Any two cards</option><option value="9-11">9–11 only</option></select></label><label class="check-field"><input type="checkbox" name="das"> Double after split</label><label class="check-field"><input type="checkbox" name="resplitAces"> Resplit aces</label><label class="field">Max split hands<select name="maxHands"><option>2</option><option>3</option><option>4</option></select></label><label class="field">Shoe penetration<select name="penetration"><option value="0.5">50%</option><option value="0.6">60%</option><option value="0.7">70%</option><option value="0.75">75%</option><option value="0.8">80%</option><option value="0.9">90%</option></select></label><label class="check-field"><input type="checkbox" name="peek"> Dealer peeks for blackjack</label><label class="field">Starting bankroll (£)<input type="number" name="startingBankroll" min="1" step="1" required></label><label class="field">Min bet (£)<input type="number" name="minBet" min="1" step="1" required></label><label class="field">Max bet (£)<input type="number" name="maxBet" min="1" step="1" required></label></div><p class="help">Rule changes take effect on the next hand with a fresh shoe. Starting bankroll is used when you reset.</p><div class="dialog-foot"><button class="ghost" type="button" id="resetBankroll">Reset bankroll</button><button class="action primary" type="submit">Save settings</button></div></form></div></div>
+<script>
+/* Pure blackjack rules and EV solver. Shoe cards retain rank and suit.
+   Numeric cards are also accepted by the console tests: ace=1, J/Q/K=11/12/13. */
+const RANKS = [1,2,3,4,5,6,7,8,9,10];
+const WEIGHTS = [1,1,1,1,1,1,1,1,1,4];
+const DEFAULT_RULES = Object.freeze({decks:6, soft17:false, payout:1.5, das:true,
+  doubleRule:'any', resplitAces:false, maxHands:4, peek:true,
+  penetration:0.75, startingBankroll:1000, minBet:10, maxBet:500});
+const P = RANKS.map((r,i)=>[r,WEIGHTS[i]/13]);
+const COACH_INTERVAL=25;
+const EV_TOLERANCE=1e-9;
+// Published non-progressive schedules: Wizard of Odds Perfect Pairs v1 A/B/D,
+// 21+3 v1/v7, and Lucky Lucky table 1. Odds are recomputed, never hardcoded.
+const SIDE_BETS=Object.freeze({
+  perfectPairs:{name:'Perfect Pairs',cards:2,description:'Your original two cards must share the same rank. J+Q is not a pair.',
+    categories:{perfect:'Perfect pair (same rank and suit)',colored:'Colored pair (same rank/color, different suits)',mixed:'Mixed pair (same rank, opposite colors)'},
+    profiles:{standard:{name:'25 / 15 / 5',pays:{perfect:25,colored:15,mixed:5}},
+      alternative:{name:'30 / 10 / 5',pays:{perfect:30,colored:10,mixed:5}},
+      live:{name:'25 / 12 / 6',pays:{perfect:25,colored:12,mixed:6}}}},
+  twentyOneThree:{name:'21+3',cards:3,description:'Your original two cards plus the dealer’s upcard form a three-card poker hand. Aces can be low (A-2-3) or high (Q-K-A), not K-A-2.',
+    categories:{suitedTrips:'Suited three of a kind',straightFlush:'Straight flush',trips:'Three of a kind',straight:'Straight',flush:'Flush'},
+    profiles:{standard:{name:'9:1 for any winning hand',pays:{suitedTrips:9,straightFlush:9,trips:9,straight:9,flush:9}},
+      enhanced:{name:'100 / 40 / 30 / 10 / 5',pays:{suitedTrips:100,straightFlush:40,trips:30,straight:10,flush:5}}}},
+  luckyLucky:{name:'Lucky Lucky',cards:3,description:'Your original two cards plus the dealer’s upcard total 19, 20 or 21. Blackjack card values apply; aces count as 1 or 11.',
+    categories:{suited777:'Suited 7-7-7',suited678:'Suited 6-7-8',triple777:'Unsuited 7-7-7',run678:'Unsuited 6-7-8',suited21:'Other suited 21',total21:'Other unsuited 21',total20:'Total of 20',total19:'Total of 19'},
+    profiles:{standard:{name:'Table 1 · top payout 200:1',pays:{suited777:200,suited678:100,triple777:50,run678:30,suited21:15,total21:3,total20:2,total19:2}}}}
+});
+const SIDE_BET_IDS=Object.keys(SIDE_BETS);
+function emptySideBets(){return Object.fromEntries(SIDE_BET_IDS.map(id=>[id,0]));}
+function normalizeSideProfiles(input={}) {
+  return Object.fromEntries(SIDE_BET_IDS.map(id=>[id,Object.hasOwn(SIDE_BETS[id].profiles,input?.[id])?input[id]:'standard']));
+}
+function sideBetCategory(id,cards) {
+  if(!SIDE_BETS[id]||cards.length!==SIDE_BETS[id].cards||cards.some(card=>
+    !card||typeof card!=='object'||!Number.isInteger(card.rank)||card.rank<1||card.rank>13||
+    !Number.isInteger(card.suit)||card.suit<0||card.suit>3))throw new Error('Side bets require cards with valid ranks and suits');
+  const ranks=cards.map(card=>card.rank).sort((a,b)=>a-b),suited=cards.every(card=>card.suit===cards[0].suit);
+  if(id==='perfectPairs'){
+    if(ranks[0]!==ranks[1])return 'lose';
+    if(suited)return 'perfect';
+    const red=card=>card.suit===1||card.suit===2;
+    return red(cards[0])===red(cards[1])?'colored':'mixed';
+  }
+  if(id==='twentyOneThree'){
+    const trips=ranks[0]===ranks[2],straight=ranks[1]===ranks[0]+1&&ranks[2]===ranks[1]+1||
+      ranks[0]===1&&ranks[1]===12&&ranks[2]===13;
+    if(trips)return suited?'suitedTrips':'trips';
+    if(straight)return suited?'straightFlush':'straight';
+    return suited?'flush':'lose';
+  }
+  const total=handValue(cards).total;
+  if(ranks.every(rank=>rank===7))return suited?'suited777':'triple777';
+  if(ranks.join(',')==='6,7,8')return suited?'suited678':'run678';
+  if(total===21)return suited?'suited21':'total21';
+  return total===20?'total20':total===19?'total19':'lose';
+}
+function sideBetResult(id,profile,stake,cards) {
+  if(!SIDE_BETS[id]||!Number.isFinite(stake)||stake<0)throw new Error('Invalid side-bet wager');
+  profile=normalizeSideProfiles({[id]:profile})[id];stake=roundMoney(stake);
+  const schedule=SIDE_BETS[id].profiles[profile];
+  const category=sideBetCategory(id,cards),odds=schedule.pays[category]??-1;
+  const paid=odds<0?0:roundMoney(stake*(odds+1));
+  return {id,profile,stake,category,odds,paid,net:roundMoney(paid-stake)};
+}
+const sideDistributionCache=new Map();
+function sideBetDistribution(id,decks) {
+  const key=id+':'+decks;if(sideDistributionCache.has(key))return sideDistributionCache.get(key);
+  if(!SIDE_BETS[id]||![1,2,4,6,8].includes(decks))throw new Error('Invalid side-bet odds request');
+  const types=[];for(let suit=0;suit<4;suit++)for(let rank=1;rank<=13;rank++)types.push({rank,suit});
+  const choose=(n,k)=>k===1?n:k===2?n*(n-1)/2:n*(n-1)*(n-2)/6;
+  const counts=Object.fromEntries([...Object.keys(SIDE_BETS[id].categories),'lose'].map(category=>[category,0]));
+  const record=(indices)=>{
+    const multiplicity=new Map();for(const index of indices)multiplicity.set(index,(multiplicity.get(index)||0)+1);
+    let weight=1;for(const copies of multiplicity.values())weight*=choose(decks,copies);
+    if(weight>0)counts[sideBetCategory(id,indices.map(index=>types[index]))]+=weight;
+  };
+  for(let a=0;a<types.length;a++)for(let b=a;b<types.length;b++){
+    if(SIDE_BETS[id].cards===2)record([a,b]);
+    else for(let c=b;c<types.length;c++)record([a,b,c]);
+  }
+  const combinations=choose(52*decks,SIDE_BETS[id].cards);
+  const distribution={counts,combinations,probabilities:Object.fromEntries(Object.entries(counts).map(([category,n])=>[category,n/combinations]))};
+  sideDistributionCache.set(key,distribution);return distribution;
+}
+function sideBetOdds(id,profile,decks) {
+  const distribution=sideBetDistribution(id,decks),pays=(SIDE_BETS[id].profiles[profile]||SIDE_BETS[id].profiles.standard).pays;
+  const ev=Object.entries(distribution.probabilities).reduce((sum,[category,p])=>sum+p*(pays[category]??-1),0);
+  return {...distribution,ev,houseEdge:-ev,winProbability:1-distribution.probabilities.lose};
+}
+function cardRank(card) { return typeof card==='number'?card:card.rank; }
+function cardValue(card) { return Math.min(cardRank(card),10); }
+function isPair(cards) { return cards.length===2 && cardValue(cards[0])===cardValue(cards[1]); }
+function decisionOptimal(item) {
+  return item.chosen===item.best || Number.isFinite(item.chosenEV) &&
+    Number.isFinite(item.bestEV) && item.chosenEV>=item.bestEV-EV_TOLERANCE;
+}
+function roundMoney(value) { return Math.round((value+Number.EPSILON)*100)/100; }
+function normalizeRules(input={}) {
+  if(!input||typeof input!=='object')input={};
+  const r={...DEFAULT_RULES};
+  for(const key of ['soft17','das','resplitAces','peek'])
+    if(typeof input[key]==='boolean')r[key]=input[key];
+  for(const [key,allowed] of [['decks',[1,2,4,6,8]],['payout',[1.5,1.2]],['maxHands',[2,3,4]],['doubleRule',['any','9-11']]])
+    if(allowed.includes(input[key]))r[key]=input[key];
+  if(Number.isFinite(input.penetration))r.penetration=Math.max(.5,Math.min(.9,input.penetration));
+  for(const key of ['startingBankroll','minBet','maxBet'])
+    if(Number.isFinite(input[key])&&input[key]>=.01)r[key]=roundMoney(input[key]);
+  r.maxBet=Math.max(r.minBet,r.maxBet);
+  return r;
+}
+function insuranceExpectedValue(rules,cards) {
+  const unseen=52*rules.decks-cards.length-1;
+  const tens=16*rules.decks-cards.filter(card=>cardValue(card)===10).length;
+  return 3*tens/unseen-1;
+}
+function handValue(cards) {
+  let total=0, aces=0;
+  for (const card of cards) { const value=cardValue(card);total+=value; if(value===1) aces++; }
+  let soft=false;
+  if(aces && total+10<=21) { total+=10; soft=true; }
+  return {total,soft,blackjack:cards.length===2 && total===21};
+}
+function hiLo(card) { const value=cardValue(card);return value>=2 && value<=6 ? 1 : value===1 || value===10 ? -1 : 0; }
+function countSequence(cards) { return cards.reduce((n,c)=>n+hiLo(c),0); }
+function beginnerShortcut(key) {
+  return ({ArrowUp:1,ArrowDown:-1,ArrowLeft:0,ArrowRight:0})[key]??null;
+}
+function newBeginnerDrill(cards) {
+  return {cards:[...cards],answered:0,correct:0,streak:0,count:0,lastAnswer:null,complete:cards.length===0};
+}
+function answerBeginnerDrill(previous,guess) {
+  if(previous.complete||![-1,0,1].includes(guess))return previous;
+  const card=previous.cards[previous.answered],expected=hiLo(card),correct=guess===expected;
+  const answered=previous.answered+1,count=previous.count+expected;
+  return {...previous,answered,count,correct:previous.correct+Number(correct),
+    streak:correct?previous.streak+1:0,complete:answered===previous.cards.length,
+    lastAnswer:{card,guess,expected,correct,before:previous.count,after:count}};
+}
+function insuranceShortcut(key,phase) {
+  if(phase!=='insurance') return null;
+  return key==='a'?true:key==='d'?false:null;
+}
+function makeShoe(decks, randomWord) {
+  const cards=[];
+  for(let d=0;d<decks;d++) for(let suit=0;suit<4;suit++)
+    for(let rank=1;rank<=13;rank++) cards.push({rank,suit});
+  for(let i=cards.length-1;i>0;i--) {
+    const span=i+1,limit=0x100000000-(0x100000000%span);
+    let word;do {word=randomWord()} while(word>=limit);
+    const j=word%span; [cards[i],cards[j]]=[cards[j],cards[i]];
+  }
+  return cards;
+}
+function dealerDraw(total,soft,rules,cache,probs) {
+  const key=total+','+soft;
+  if(cache.has(key)) return cache.get(key);
+  if(total>21) return {bust:1};
+  if(total>17 || total===17 && (!soft || !rules.soft17)) return {[total]:1};
+  const out={};
+  for(const [rank,p] of probs) {
+    let next=total+rank, nextSoft=soft;
+    if(rank===1 && total+11<=21) { next+=10; nextSoft=true; }
+    else if(next>21 && nextSoft) {next-=10; nextSoft=false;}
+    const branch=dealerDraw(next,nextSoft,rules,cache,probs);
+    for(const [k,v] of Object.entries(branch)) out[k]=(out[k]||0)+p*v;
+  }
+  cache.set(key,out); return out;
+}
+function dealerDistribution(up,rules,conditionNoBlackjack,probs=P) {
+  up=cardValue(up);
+  const cache=new Map(), out={}; let weight=0;
+  for(const [hole,p] of probs) {
+    const bj=(up===1 && hole===10)||(up===10 && hole===1);
+    if(bj && conditionNoBlackjack) continue;
+    weight+=p;
+    const dist=bj ? {blackjack:1} : dealerDraw(handValue([up,hole]).total,handValue([up,hole]).soft,rules,cache,probs);
+    for(const [k,v] of Object.entries(dist)) out[k]=(out[k]||0)+p*v;
+  }
+  for(const k of Object.keys(out)) out[k]/=weight;
+  return out;
+}
+const solverCache=new Map();
+function solverFor(rules,up,conditionNoBlackjack=rules.peek,knownCards=[]) {
+  up=cardValue(up);knownCards=knownCards.map(cardValue).sort((a,b)=>a-b);
+  const key=JSON.stringify([rules.soft17,rules.payout,rules.das,rules.doubleRule,
+    rules.resplitAces,rules.maxHands,rules.peek,rules.decks,up,
+    conditionNoBlackjack,knownCards]);
+  if(solverCache.has(key)) return solverCache.get(key);
+  const actionCache=new Map();
+  function actions(cards,options={}) {
+    cards=cards.map(cardValue).sort((a,b)=>a-b);
+    const funds=options.funds===undefined?Infinity:options.funds;
+    const stake=options.stake===undefined?1:options.stake;
+    // At most every available split hand can add one double-down wager.
+    const budget=Math.min(2*rules.maxHands,Math.floor((funds+EV_TOLERANCE)/stake));
+    const cacheKey=JSON.stringify([cards,budget,options.fromSplit,options.splitAces,
+      options.natural,options.handCount||1]);
+    if(actionCache.has(cacheKey))return {...actionCache.get(cacheKey)};
+    const counts=WEIGHTS.map(w=>w*4*rules.decks);
+    for(const rank of [up,...cards])counts[rank-1]--;
+    if(counts.some(n=>n<0))throw new Error('Impossible hand composition');
+    const initialN=counts.reduce((a,b)=>a+b,0);
+    const excluded=conditionNoBlackjack?(up===1?9:up===10?0:-1):-1;
+    const dealerCache=new Map(),distributionCache=new Map(),playerCache=new Map();
+    // Dealer buckets: bust, 17, 18, 19, 20, 21, natural blackjack.
+    const terminals=Array.from({length:7},(_,i)=>Array.from({length:7},(_,j)=>Number(i===j)));
+    function addCard(value,rank){let total=value.total+rank,soft=value.soft;
+      if(rank===1&&total+10<=21){total+=10;soft=true}
+      else if(total>21&&soft){total-=10;soft=false}
+      return {total,soft};
+    }
+    function dealer(total,soft,n){
+      if(total>21)return terminals[0];
+      if(total>17||total===17&&(!soft||!rules.soft17))return terminals[total-16];
+      const key=counts.join(',')+':'+total+':'+soft;
+      if(dealerCache.has(key))return dealerCache.get(key);
+      const out=Array(7).fill(0);
+      for(let i=0;i<RANKS.length;i++)if(counts[i]){
+        const p=counts[i]/n,next=addCard({total,soft},i+1);
+        counts[i]--;const branch=dealer(next.total,next.soft,n-1);counts[i]++;
+        for(let k=0;k<out.length;k++)out[k]+=p*branch[k];
+      }
+      dealerCache.set(key,out);return out;
+    }
+    function distribution(n){const key=counts.join(',');
+      if(distributionCache.has(key))return distributionCache.get(key);
+      const out=Array(7).fill(0),denominator=n-(excluded>=0?counts[excluded]:0);
+      for(let i=0;i<RANKS.length;i++)if(i!==excluded&&counts[i]){
+        const p=counts[i]/denominator,hole=i+1;
+        if(up===1&&hole===10||up===10&&hole===1){out[6]+=p;continue}
+        const value=handValue([up,hole]);counts[i]--;
+        const branch=dealer(value.total,value.soft,n-1);counts[i]++;
+        for(let k=0;k<out.length;k++)out[k]+=p*branch[k];
+      }
+      distributionCache.set(key,out);return out;
+    }
+    function stand(value,n,natural=false){
+      if(value.total>21)return -1;
+      const dist=distribution(n);
+      if(natural)return (1-dist[6])*rules.payout;
+      let ev=dist[0]-dist[6];
+      for(let k=1;k<=5;k++)ev+=dist[k]*Math.sign(value.total-(k+16));
+      return ev;
+    }
+    function drawProbability(i,n){
+      // The unseen counts include one reserved hole card. After a peek its
+      // rank cannot complete blackjack, so player draws use the conditional
+      // marginal, without inspecting the actual hidden card in the game.
+      const allowed=n-(excluded>=0?counts[excluded]:0);
+      const holeProbability=i===excluded?0:counts[i]/allowed;
+      return (counts[i]-holeProbability)/(n-1);
+    }
+    function hit(value,n,doubled=false){let ev=0;
+      for(let i=0;i<RANKS.length;i++)if(counts[i]){
+        const p=drawProbability(i,n),next=addCard(value,i+1);
+        counts[i]--;ev+=p*(doubled?2*stand(next,n-1):bestAfterHit(next,n-1));counts[i]++;
+      }
+      return ev;
+    }
+    function bestAfterHit(value,n){
+      if(value.total>21)return -1;
+      if(value.total===21)return stand(value,n);
+      const key=counts.join(',')+':'+value.total+':'+value.soft;
+      if(playerCache.has(key))return playerCache.get(key);
+      const ev=Math.max(stand(value,n),hit(value,n));playerCache.set(key,ev);return ev;
+    }
+    const value=handValue(cards),two=cards.length===2;
+    const out={stand:stand(value,initialN,Boolean(options.natural))};
+    if(!options.natural&&value.total<21&&!options.splitAces)out.hit=hit(value,initialN);
+    if(two&&!options.natural&&!options.splitAces&&value.total<21&&budget>=1&&
+      (!options.fromSplit||rules.das)&&(rules.doubleRule==='any'||value.total>=9&&value.total<=11))
+      out.double=hit(value,initialN,true);
+    if(isPair(cards)&&!options.natural&&budget>=1&&(options.handCount||1)<rules.maxHands&&
+      (!options.splitAces||cards[0]===1&&rules.resplitAces)){
+      const rank=cards[0],aces=rank===1,children=[];
+      for(let i=0;i<RANKS.length;i++)if(counts[i]){
+        const p=drawProbability(i,initialN),child=handValue([rank,i+1]);counts[i]--;
+        const single=Math.max(stand(child,initialN-1),aces||child.total===21?-Infinity:hit(child,initialN-1));
+        const canDouble=!aces&&child.total<21&&rules.das&&
+          (rules.doubleRule==='any'||child.total>=9&&child.total<=11);
+        children.push({rank:i+1,p,single,double:canDouble?hit(child,initialN-1,true):-Infinity});counts[i]++;
+      }
+      const splitCache=new Map();
+      // Split EV treats each child against the same initial unseen mixture;
+      // depletion by the other split hands is ignored. Budget and global
+      // hand limits are shared. This is the only approximation in this solver.
+      function splitQueue(pending,remainingSplits,available){
+        if(!pending)return 0;
+        const key=pending+','+remainingSplits+','+available;
+        if(splitCache.has(key))return splitCache.get(key);
+        let ev=0;
+        for(const child of children){
+          let result=child.single+splitQueue(pending-1,remainingSplits,available);
+          if(available>0)result=Math.max(result,child.double+splitQueue(pending-1,remainingSplits,available-1));
+          if(child.rank===rank&&remainingSplits>0&&available>0&&(!aces||rules.resplitAces))
+            result=Math.max(result,splitQueue(pending+1,remainingSplits-1,available-1));
+          ev+=child.p*result;
+        }
+        splitCache.set(key,ev);return ev;
+      }
+      out.split=splitQueue(2,rules.maxHands-(options.handCount||1)-1,budget-1);
+    }
+    actionCache.set(cacheKey,out);return {...out};
+  }
+  const solver={actions};
+  // Retain small final-EV caches; recursive working maps are released per solve.
+  if(solverCache.size>=4096)solverCache.delete(solverCache.keys().next().value);
+  solverCache.set(key,solver);return solver;
+}
+function bestAction(evs) {
+  const order=['split','double','stand','hit'];
+  return order.filter(a=>a in evs).reduce((a,b)=>evs[b]>evs[a]+EV_TOLERANCE?b:a);
+}
+function newGame(rules,shoe) {
+  rules=normalizeRules(rules);
+  return {rules:{...rules},pendingRules:null,shoe:[...shoe],position:0,shoeSerial:1,
+    roundId:0,round:null,review:[],needsShuffle:false,
+    bankroll:rules.startingBankroll,bet:rules.minBet,phase:'betting',dealer:[],
+    dealerRevealed:false,hands:[],active:0,insurance:0,exposedCards:[],dealerPlayed:false,
+    sideBets:emptySideBets(),sideProfiles:normalizeSideProfiles(),sideResults:[],
+    runningCount:0,message:'Choose a bet and deal.'};
+}
+function legalActions(s) {
+  if(s.phase!=='player') return [];
+  const hand=s.hands[s.active], cards=hand.cards, value=handValue(cards);
+  if(hand.done||cards.length<2||value.total>=21)return [];
+  const actions=['hit','stand'];
+  if(hand.splitAces) actions.splice(actions.indexOf('hit'),1);
+  if(cards.length===2 && !hand.splitAces && s.bankroll>=hand.wager &&
+    (!hand.fromSplit || s.rules.das) &&
+    (s.rules.doubleRule==='any' || value.total>=9 && value.total<=11)) actions.push('double');
+  if(isPair(cards) && s.hands.length<s.rules.maxHands &&
+    s.bankroll>=hand.wager && (!hand.splitAces || s.rules.resplitAces)) actions.push('split');
+  return actions;
+}
+function legalEVs(s) {
+  if(s.phase!=='player') return {};
+  const hand=s.hands[s.active],legal=legalActions(s);
+  const candidates=solverFor(s.rules,s.dealer[0],s.rules.peek,hand.cards).actions(hand.cards,
+    {funds:s.bankroll,stake:hand.wager,fromSplit:hand.fromSplit,splitAces:hand.splitAces,
+      handCount:s.hands.length});
+  return Object.fromEntries(Object.entries(candidates).filter(([action])=>legal.includes(action)));
+}
+function newSession(openingBankroll) {
+  return {openingBankroll,rounds:0,hands:0,wins:0,losses:0,pushes:0,blackjacks:0,
+    net:0,totalWagered:0,openingBets:0,decisions:0,optimalDecisions:0,evMissed:0,
+    doubles:0,splits:0,insuranceBets:0,largestWin:0,largestLoss:0,
+    currentStreak:0,longestWinStreak:0,longestLossStreak:0,shoesUsed:0,
+    history:[],handHistory:[],coachReports:[],shoeSerials:[],twoFaceHands:0,twoTenValueHands:0,
+    openingBlackjacks:0,rankCounts:Array(13).fill(0),exposedCards:0,playerBusts:0,dealerBusts:0,dealerPlayedRounds:0,
+    mainNet:0,insuranceNet:0,sideNet:0,sideWagered:0,
+    sideStats:Object.fromEntries(SIDE_BET_IDS.map(id=>[id,{bets:0,wins:0,wagered:0,net:0}]))};
+}
+function summarizeCoachingBlock(hands) {
+  const decisions=hands.flatMap(hand=>hand.decisions);
+  const optimal=decisions.filter(decisionOptimal).length;
+  const evMissed=decisions.reduce((sum,item)=>sum+item.evCost,0);
+  const patterns=new Map();
+  for(const item of decisions) {
+    if(decisionOptimal(item)) continue;
+    const key=item.chosen+'→'+item.best;
+    const group=patterns.get(key)||{chosen:item.chosen,best:item.best,count:0,evCost:0,example:item};
+    group.count++;group.evCost+=item.evCost;
+    if(item.evCost>group.example.evCost) group.example=item;
+    patterns.set(key,group);
+  }
+  const topPattern=[...patterns.values()].sort((a,b)=>b.evCost-a.evCost)[0]||null;
+  return {hands:hands.length,decisions:decisions.length,optimal,evMissed,
+    wins:hands.filter(hand=>hand.result==='Win'||hand.result==='Blackjack').length,
+    losses:hands.filter(hand=>!['Win','Blackjack','Push'].includes(hand.result)).length,
+    pushes:hands.filter(hand=>hand.result==='Push').length,topPattern};
+}
+function buildCoachReport(handHistory,milestone) {
+  const current=summarizeCoachingBlock(handHistory.slice(milestone-COACH_INTERVAL,milestone));
+  const previous=milestone>=2*COACH_INTERVAL?
+    summarizeCoachingBlock(handHistory.slice(milestone-2*COACH_INTERVAL,milestone-COACH_INTERVAL)):null;
+  return {milestone,current,previous};
+}
+function recordRound(previous,round,bankroll) {
+  if(!round || round.void) return previous;
+  const s={...previous,history:[...previous.history],handHistory:[...previous.handHistory],
+    coachReports:[...previous.coachReports],shoeSerials:[...previous.shoeSerials],rankCounts:[...previous.rankCounts],
+    sideStats:Object.fromEntries(SIDE_BET_IDS.map(id=>[id,{...previous.sideStats[id]}]))};
+  s.rounds++;s.hands+=round.results.length;s.net=roundMoney(s.net+round.net);
+  s.totalWagered=roundMoney(s.totalWagered+round.wagered);s.openingBets=roundMoney(s.openingBets+round.bet);
+  s.mainNet=roundMoney(s.mainNet+(round.mainNet??round.net));s.insuranceNet=roundMoney(s.insuranceNet+(round.insuranceNet||0));
+  for(const result of round.sideResults||[]){
+    const stat=s.sideStats[result.id];stat.bets++;if(result.paid>0)stat.wins++;
+    stat.wagered=roundMoney(stat.wagered+result.stake);stat.net=roundMoney(stat.net+result.net);
+    s.sideNet=roundMoney(s.sideNet+result.net);s.sideWagered=roundMoney(s.sideWagered+result.stake);
+  }
+  if(!s.shoeSerials.includes(round.shoeSerial))s.shoeSerials.push(round.shoeSerial);
+  s.shoesUsed=s.shoeSerials.length;
+  for(const card of round.exposedCards||[]){s.rankCounts[cardRank(card)-1]++;s.exposedCards++}
+  s.playerBusts+=round.results.filter(result=>result==='Bust').length;
+  if(round.dealerPlayed)s.dealerPlayedRounds++;
+  if(round.dealerBust)s.dealerBusts++;
+  if(round.openingCards){
+    if(round.openingCards.every(card=>cardRank(card)>=11))s.twoFaceHands++;
+    if(round.openingCards.every(card=>cardValue(card)===10))s.twoTenValueHands++;
+    if(handValue(round.openingCards).blackjack)s.openingBlackjacks++;
+  }
+  for(const result of round.results) {
+    if(result==='Blackjack') {s.blackjacks++;s.wins++;}
+    else if(result==='Win') s.wins++;
+    else if(result==='Push') s.pushes++;
+    else s.losses++;
+  }
+  for(const decision of round.review) {
+    s.decisions++;
+    if(decisionOptimal(decision)) s.optimalDecisions++;
+    s.evMissed+=decision.evCost;
+    if(decision.chosen==='double') s.doubles++;
+    if(decision.chosen==='split') s.splits++;
+    if(decision.chosen==='takeInsurance') s.insuranceBets++;
+  }
+  if(round.net>0) s.currentStreak=s.currentStreak>0?s.currentStreak+1:1;
+  else if(round.net<0) s.currentStreak=s.currentStreak<0?s.currentStreak-1:-1;
+  else s.currentStreak=0;
+  s.longestWinStreak=Math.max(s.longestWinStreak,s.currentStreak);
+  s.longestLossStreak=Math.max(s.longestLossStreak,-s.currentStreak);
+  s.largestWin=Math.max(s.largestWin,round.net);
+  s.largestLoss=Math.min(s.largestLoss,round.net);
+  s.history.push({number:s.rounds,bet:round.bet,net:round.net,sideNet:round.sideNet||0,bankroll,
+    results:[...round.results]});
+  round.results.forEach((result,index)=>s.handHistory.push({result,roundId:round.id,
+    decisions:round.review.filter(item=>item.handIndex===index).map(item=>({...item}))}));
+  const nextMilestone=Math.floor(s.hands/COACH_INTERVAL)*COACH_INTERVAL;
+  const previousMilestone=Math.floor(previous.hands/COACH_INTERVAL)*COACH_INTERVAL;
+  if(nextMilestone>previousMilestone)
+    s.coachReports.push(buildCoachReport(s.handHistory,nextMilestone));
+  return s;
+}
+function trainingFamily(item) {
+  if(item.kind==='insurance') return 'Insurance';
+  const cards=item.cards,value=handValue(cards),rank=cardValue(cards[0]);
+  if(isPair(cards)) return 'Pair of '+(rank===1?'aces':rank===10?'10-value cards':rank+'s');
+  if(value.soft) return value.total<=17?'Soft 13–17':value.total===18?'Soft 18':'Soft 19+';
+  return value.total<=11?'Hard 11 or less':value.total<=16?'Hard 12–16':'Hard 17+';
+}
+function trainingScenarioKey(item) {
+  const rules=item.rules||{},cards=item.cards.map(cardValue).sort((a,b)=>a-b);
+  const ruleKeys=['decks','soft17','payout','das','doubleRule','resplitAces','maxHands','peek'];
+  return JSON.stringify([item.kind,cards,cardValue(item.dealerUp),[...(item.legal||[])].sort(),
+    ruleKeys.map(key=>rules[key])]);
+}
+function analyzeTraining(handHistory) {
+  const decisions=handHistory.flatMap(hand=>hand.decisions.map(item=>({...item,roundId:hand.roundId})));
+  const misses=decisions.filter(item=>!decisionOptimal(item));
+  const patternMap=new Map(),scenarioMap=new Map();
+  for(const item of misses) {
+    const family=trainingFamily(item),patternKey=family+'|'+item.chosen+'|'+item.best;
+    const gap=Math.max(0,item.bestEV-item.chosenEV);
+    const pattern=patternMap.get(patternKey)||{key:patternKey,family,chosen:item.chosen,best:item.best,
+      count:0,totalGap:0,totalCost:0,example:item};
+    pattern.count++;pattern.totalGap+=gap;pattern.totalCost+=item.evCost;
+    if(gap>pattern.example.bestEV-pattern.example.chosenEV) pattern.example=item;
+    patternMap.set(patternKey,pattern);
+    const key=trainingScenarioKey(item);
+    const scenario=scenarioMap.get(key)||{key,patternKey,example:item,count:0,totalGap:0};
+    scenario.count++;scenario.totalGap+=gap;scenario.example=item;
+    scenarioMap.set(key,scenario);
+  }
+  const patterns=[...patternMap.values()].sort((a,b)=>b.totalGap-a.totalGap||b.count-a.count);
+  const scenarios=[...scenarioMap.values()].sort((a,b)=>b.totalGap-a.totalGap||b.count-a.count);
+  const windowSize=10, recent=decisions.slice(-windowSize),prior=decisions.slice(-2*windowSize,-windowSize);
+  const rate=items=>items.filter(decisionOptimal).length/items.length;
+  const trend=prior.length===windowSize&&recent.length===windowSize?
+    {previousRate:rate(prior),recentRate:rate(recent),windowSize}:null;
+  return {decisions:decisions.length,misses:misses.length,patterns,scenarios,trend};
+}
+function draw(s,visible=true) {
+  if(s.position>=s.shoe.length) throw new Error('shoe exhausted');
+  const card=s.shoe[s.position++];
+  if(visible){s.runningCount+=hiLo(card);s.exposedCards.push(card)}
+  return card;
+}
+function revealDealer(s) {
+  if(!s.dealerRevealed && s.dealer.length>1) {
+    s.runningCount+=hiLo(s.dealer[1]); s.dealerRevealed=true;
+    s.exposedCards.push(s.dealer[1]);
+  }
+}
+function settle(s) {
+  revealDealer(s);
+  const dealer=handValue(s.dealer), dealerBJ=dealer.blackjack;
+  let net=0;
+  for(const hand of s.hands) {
+    let paid=0;
+    const player=handValue(hand.cards), natural=player.blackjack && !hand.fromSplit;
+    if(dealerBJ) paid=natural?hand.wager:0;
+    else if(natural) paid=hand.wager*(1+s.rules.payout);
+    else if(player.total>21) paid=0;
+    else if(dealer.total>21 || player.total>dealer.total) paid=2*hand.wager;
+    else if(player.total===dealer.total) paid=hand.wager;
+    paid=roundMoney(paid);s.bankroll=roundMoney(s.bankroll+paid);net=roundMoney(net+paid-hand.wager);
+    hand.result=player.total>21?'Bust':dealerBJ?(natural?'Push':'Dealer blackjack'):
+      natural?'Blackjack':dealer.total>21||player.total>dealer.total?'Win':
+      player.total===dealer.total?'Push':'Lose';
+  }
+  const mainNet=net;let insuranceNet=0;
+  if(s.insurance) {
+    const paid=dealerBJ?3*s.insurance:0;
+    s.bankroll=roundMoney(s.bankroll+paid);insuranceNet=roundMoney(paid-s.insurance);
+  }
+  const sideNet=roundMoney(s.sideResults.reduce((sum,result)=>sum+result.net,0));
+  net=roundMoney(mainNet+insuranceNet+sideNet);
+  s.round={id:s.roundId,void:false,net,mainNet,insuranceNet,sideNet,sideResults:s.sideResults.map(result=>({...result})),bet:s.bet,
+    wagered:roundMoney(s.hands.reduce((sum,hand)=>sum+hand.wager,0)+s.insurance+s.sideResults.reduce((sum,result)=>sum+result.stake,0)),
+    results:s.hands.map(hand=>hand.result),review:s.review.map(item=>({...item})),
+    shoeSerial:s.shoeSerial,openingCards:s.openingCards,exposedCards:[...s.exposedCards],
+    dealerPlayed:s.dealerPlayed,dealerBust:dealer.total>21};
+  s.phase='settled'; s.message=(net>0?'+':'')+money(net)+' this hand.';
+  s.needsShuffle=Boolean(s.pendingRules)||s.position>=Math.floor(s.shoe.length*s.rules.penetration);
+}
+function money(n) {return '£'+Number(n.toFixed(2)).toFixed(2);}
+function finishHands(s) {
+  while(s.active<s.hands.length) {
+    const hand=s.hands[s.active];
+    // Casino order: finish the active split hand before dealing to the next.
+    if(hand.cards.length===1)hand.cards.push(draw(s));
+    if(handValue(hand.cards).total>=21)hand.done=true;
+    if(!hand.done && !hand.splitAces) break;
+    if(!hand.done && hand.splitAces && legalActions(s).includes('split')) break;
+    hand.done=true; s.active++;
+  }
+  if(s.active<s.hands.length) return;
+  if(s.hands.every(h=>handValue(h.cards).total>21)) {settle(s);return;}
+  s.phase='dealer';s.dealerPlayed=true;revealDealer(s);
+  while(true) {
+    const v=handValue(s.dealer);
+    if(v.total>21 || v.total>17 || v.total===17 && (!v.soft || !s.rules.soft17)) break;
+    s.dealer.push(draw(s));
+  }
+  settle(s);
+}
+function reduceGame(previous,event) {
+  const s=JSON.parse(JSON.stringify(previous));
+  try {
+    if(event.type==='sideBets') {
+      if(!['betting','settled'].includes(s.phase))return previous;
+      const bets=event.bets||s.sideBets,maxBet=(s.pendingRules||s.rules).maxBet;
+      if(SIDE_BET_IDS.some(id=>!Number.isFinite(bets[id])||bets[id]<0||bets[id]>maxBet)){
+        s.message='Each side bet must be between '+money(0)+' and '+money(maxBet)+'.';return s;
+      }
+      s.sideBets=Object.fromEntries(SIDE_BET_IDS.map(id=>[id,roundMoney(bets[id])]));
+      s.sideProfiles=normalizeSideProfiles(event.profiles||s.sideProfiles);return s;
+    }
+    if(event.type==='bet') {
+      if(s.phase!=='betting' && s.phase!=='settled') return previous;
+      const betRules=s.pendingRules||s.rules;
+      const requested=Number(event.amount);
+      s.bet=roundMoney(Math.min(betRules.maxBet,Math.max(betRules.minBet,Number.isFinite(requested)?requested:betRules.minBet)));
+      return s;
+    }
+    if(event.type==='rules') {
+      s.pendingRules=normalizeRules(event.rules);s.needsShuffle=true;
+      s.message='Rules saved. They apply on the next deal with a fresh shoe.';
+      return s;
+    }
+    if(event.type==='reset') return newGame(s.rules,event.shoe);
+    if(event.type==='deal') {
+      if(!['betting','settled'].includes(s.phase)) return previous;
+      if(s.pendingRules) {
+        s.rules=s.pendingRules;s.pendingRules=null;
+        s.needsShuffle=true;
+        s.bet=Math.max(s.rules.minBet,Math.min(s.rules.maxBet,s.bet));
+      }
+      const sideStake=roundMoney(SIDE_BET_IDS.reduce((sum,id)=>sum+s.sideBets[id],0));
+      if(SIDE_BET_IDS.some(id=>s.sideBets[id]>s.rules.maxBet)){
+        s.message='Side bet exceeds the new table maximum. Reduce it before dealing.';return s;
+      }
+      if(roundMoney(s.bet+sideStake)>s.bankroll) {s.message='Your main bet plus side bets exceed your bankroll.';return s;}
+      if(s.bankroll<s.rules.minBet) {s.message='Bankroll below minimum. Reset bankroll in Settings.';return s;}
+      if(s.needsShuffle || s.position>=Math.floor(s.shoe.length*s.rules.penetration)) {
+        if(!event.shoe) throw new Error('new shoe required');
+        s.shoe=[...event.shoe];s.position=0;s.runningCount=0;s.needsShuffle=false;
+        s.shoeSerial++;
+      }
+      s.roundId++;s.round=null;s.review=[];
+      s.bankroll=roundMoney(s.bankroll-s.bet-sideStake);s.insurance=0;s.sideResults=[];
+      s.dealer=[];s.dealerRevealed=false;s.exposedCards=[];s.dealerPlayed=false;s.hands=[{cards:[],wager:s.bet,fromSplit:false,
+        splitAces:false,done:false}];s.active=0;
+      s.hands[0].cards.push(draw(s));s.dealer.push(draw(s));
+      s.hands[0].cards.push(draw(s));s.dealer.push(draw(s,false));
+      s.openingCards=[...s.hands[0].cards];
+      for(const id of SIDE_BET_IDS)if(s.sideBets[id]>0){
+        const cards=SIDE_BETS[id].cards===2?s.openingCards:[...s.openingCards,s.dealer[0]];
+        const result=sideBetResult(id,s.sideProfiles[id],s.sideBets[id],cards);
+        s.sideResults.push(result);s.bankroll=roundMoney(s.bankroll+result.paid);
+      }
+      const up=cardValue(s.dealer[0]), dealerBJ=handValue(s.dealer).blackjack;
+      if(up===1) {s.phase='insurance';
+        s.message='Insurance offered: up to half your bet. Usually a negative EV bet.';return s;}
+      if(s.rules.peek && up===10 && dealerBJ) {settle(s);return s;}
+      if(handValue(s.hands[0].cards).blackjack) {settle(s);return s;}
+      s.phase='player';s.message='Choose an action.';return s;
+    }
+    if(event.type==='insurance') {
+      if(s.phase!=='insurance') return previous;
+      const stake=roundMoney(Math.min(s.bet/2,s.bankroll));
+      const taking=Boolean(event.take && stake>=s.bet/2),insuranceEV=insuranceExpectedValue(s.rules,s.hands[0].cards);
+      s.review.push({kind:'insurance',chosen:taking?'takeInsurance':'declineInsurance',
+        best:'declineInsurance',cards:[...s.hands[0].cards],dealerUp:s.dealer[0],
+        handIndex:0,legal:s.bankroll>=s.bet/2?['declineInsurance','takeInsurance']:['declineInsurance'],rules:{...s.rules},
+        evs:s.bankroll>=s.bet/2?{declineInsurance:0,takeInsurance:insuranceEV}:{declineInsurance:0},
+        evCost:taking?-insuranceEV*stake:0,chosenEV:taking?insuranceEV:0,bestEV:0});
+      if(taking) {s.insurance=stake;s.bankroll=roundMoney(s.bankroll-stake);}
+      if(s.rules.peek && handValue(s.dealer).blackjack) {settle(s);return s;}
+      if(handValue(s.hands[0].cards).blackjack) {settle(s);return s;}
+      s.phase='player';s.message='Choose an action.';return s;
+    }
+    if(event.type==='action') {
+      const action=event.action;
+      if(!legalActions(s).includes(action)) return previous;
+      const h=s.hands[s.active],evs=legalEVs(s),best=bestAction(evs);
+      s.review.push({kind:'play',chosen:action,best,cards:[...h.cards],
+        dealerUp:s.dealer[0],handIndex:s.active,legal:Object.keys(evs),rules:{...s.rules},evs:{...evs},
+        chosenEV:evs[action],bestEV:evs[best],
+        evCost:Math.max(0,evs[best]-evs[action])*h.wager});
+      if(action==='hit') {h.cards.push(draw(s));if(handValue(h.cards).total>=21) h.done=true;}
+      if(action==='stand') h.done=true;
+      if(action==='double') {s.bankroll=roundMoney(s.bankroll-h.wager);h.wager*=2;h.cards.push(draw(s));h.done=true;}
+      if(action==='split') {
+        s.bankroll=roundMoney(s.bankroll-h.wager);
+        const ace=cardValue(h.cards[0])===1;
+        const a={cards:[h.cards[0]],wager:h.wager,fromSplit:true,splitAces:ace,
+          done:false};
+        const b={...a,cards:[h.cards[1]]};
+        s.hands.splice(s.active,1,a,b);
+      }
+      finishHands(s);return s;
+    }
+    return previous;
+  } catch(error) {
+    if(error.message!=='shoe exhausted') throw error;
+    // A depleted shoe voids the hand; no replacement cards enter mid-hand.
+    for(const h of s.hands)s.bankroll=roundMoney(s.bankroll+h.wager);
+    s.bankroll=roundMoney(s.bankroll+s.insurance);s.insurance=0;s.phase='settled';s.needsShuffle=true;
+    // Side winnings were paid on the opening deal. Reverse them and refund
+    // all original side stakes when the whole round is voided.
+    s.bankroll=roundMoney(s.bankroll+SIDE_BET_IDS.reduce((sum,id)=>sum+s.sideBets[id],0)-s.sideResults.reduce((sum,result)=>sum+result.paid,0));
+    s.sideResults=[];
+    s.round={id:s.roundId,void:true};
+    revealDealer(s);s.message='Shoe exhausted mid-hand. All wagers refunded; next deal reshuffles.';
+    return s;
+  }
+}
+function runSelfTests() {
+  let passed=0;
+  const assert=(ok,label)=>{if(!ok) throw new Error('Self-test failed: '+label);passed++;};
+  const rules={...DEFAULT_RULES};
+  const choice=(cards,up,r=rules,options={})=>bestAction(solverFor(r,up,r.peek,cards).actions(cards,options));
+  assert(choice([10,6],10)==='hit','16 vs 10 without surrender');
+  assert(choice([10,5],10)==='hit','15 vs 10 without surrender');
+  assert(choice([1,7],9)==='hit','soft 18 vs 9');
+  assert(choice([1,1],10)==='split','A,A split');
+  assert(choice([8,8],10)==='split','8,8 split');
+  assert(choice([10,10],6)==='stand','10,10 stand');
+  assert(choice([9,9],7)==='stand','9,9 vs 7 stand');
+  assert(choice([9,3],4)==='stand','12 vs 4 stand');
+  assert(choice([10,2],4)==='hit','10+2 vs 4 finite-deck composition exception');
+  assert(choice([10,2],3)==='hit','12 vs 3 hit');
+  const single={...rules,decks:1,soft17:true};
+  assert(choice([6,5],1,single)==='double','single deck H17 11 vs A double');
+  assert(choice([6,5],1,{...single,soft17:false})==='double','single deck S17 6+5 vs A double');
+  assert(choice([6,5],1,{...rules,soft17:true})==='double','six deck H17 11 vs A double');
+  assert(choice([6,5],1,rules)==='hit','six deck S17 11 vs A hit');
+  assert(countSequence([2,5,7,9,10,1,6])===1,'Hi-Lo sequence');
+  assert(beginnerShortcut('ArrowUp')===1&&beginnerShortcut('ArrowDown')===-1&&
+    beginnerShortcut('ArrowLeft')===0&&beginnerShortcut('ArrowRight')===0&&beginnerShortcut('h')===null,
+    'beginner arrow keys map to card values, not blackjack actions');
+  let beginner=newBeginnerDrill([2,11,8,6,1]);
+  const initialBeginner=beginner;
+  for(const value of [0,-1,0,1,-1])beginner=answerBeginnerDrill(beginner,value);
+  assert(initialBeginner.answered===0&&beginner.complete&&beginner.answered===5&&
+    beginner.correct===4&&beginner.streak===4&&beginner.count===0,
+    'beginner answers are immutable, scored once, and count uses actual cards even after a mistake');
+  assert(answerBeginnerDrill(beginner,1)===beginner&&
+    answerBeginnerDrill(initialBeginner,2)===initialBeginner,'completed drills and invalid answers cannot advance');
+  for(const decks of [1,2,4,6,8]){
+    let full=newBeginnerDrill(makeShoe(decks,()=>0));
+    for(const card of full.cards)full=answerBeginnerDrill(full,hiLo(card));
+    assert(full.complete&&full.answered===52*decks&&full.correct===52*decks&&full.count===0,
+      'beginner full '+decks+'-deck run visits every card exactly once and ends balanced');
+  }
+  assert(insuranceShortcut('a','insurance')===true &&
+    insuranceShortcut('d','insurance')===false &&
+    insuranceShortcut('d','player')===null &&
+    insuranceShortcut('h','insurance')===null,
+    'insurance shortcuts are active only during the insurance offer');
+  const missed={kind:'play',cards:[10,6],dealerUp:10,chosen:'stand',best:'hit',
+    legal:['hit','stand'],rules,chosenEV:-0.6,bestEV:-0.5,evCost:1};
+  const training=analyzeTraining([{roundId:1,decisions:[missed,missed]},
+    {roundId:2,decisions:[{...missed,chosen:'hit',evCost:0}]}]);
+  assert(training.decisions===3 && training.misses===2 &&
+    training.patterns.length===1 && training.patterns[0].count===2 &&
+    training.scenarios.length===1 && training.scenarios[0].count===2,
+    'training groups only missed decisions and deduplicates situations');
+  assert(trainingScenarioKey(missed)!==trainingScenarioKey({...missed,rules:{...rules,soft17:true}}) &&
+    trainingScenarioKey(missed)!==trainingScenarioKey({...missed,legal:['hit','stand','double']}),
+    'practice situations remain separate when rules or legal actions differ');
+  const improving=analyzeTraining([{roundId:1,decisions:Array(10).fill(missed)},
+    {roundId:2,decisions:Array(10).fill({...missed,chosen:'hit'})}]);
+  assert(improving.trend.previousRate===0 && improving.trend.recentRate===1,
+    'training compares recent decisions with the preceding window');
+  const dist=dealerDistribution(10,rules,true);
+  assert(Math.abs(Object.values(dist).reduce((a,b)=>a+b,0)-1)<1e-10,'dealer distribution sums to one');
+  assert(!('blackjack' in dist),'peek conditions away dealer blackjack');
+  const shoe=makeShoe(1,()=>0);
+  assert(shoe.length===52 && Array.from({length:13},(_,i)=>i+1).every(r=>shoe.filter(c=>c.rank===r).length===4) &&
+    new Set(shoe.map(c=>c.rank+':'+c.suit)).size===52,'one deck has all 52 distinct ranks and suits');
+  let game=newGame(rules,[1,9,10,7]);game=reduceGame(game,{type:'deal'});
+  assert(game.phase==='settled' && game.bankroll===1015,'natural blackjack pays 3:2');
+  game=newGame(rules,[10,1,6,10]);game=reduceGame(game,{type:'deal'});
+  assert(game.phase==='insurance' && game.runningCount===-1,'dealer hole card stays hidden from count');
+  game=reduceGame(game,{type:'insurance',take:true});
+  assert(game.phase==='settled' && game.bankroll===1000 && game.runningCount===-2,
+    'insurance pays 2:1 against dealer blackjack and reveals hole card');
+  game=newGame({...rules,peek:false},[10,1,6,10]);
+  game=reduceGame(game,{type:'deal'});game=reduceGame(game,{type:'insurance',take:false});
+  assert(!legalActions(game).includes('surrender'),'surrender is never a legal action');
+  game=reduceGame(game,{type:'action',action:'stand'});
+  assert(game.bankroll===990,'no-peek dealer blackjack resolves after player stands');
+  game=newGame({...rules,resplitAces:true},[1,6,1,10,1,2,3,4]);
+  game=reduceGame(game,{type:'deal'});game=reduceGame(game,{type:'action',action:'split'});
+  assert(game.phase==='player' && legalActions(game).includes('split') &&
+    !legalActions(game).includes('hit'),'split aces can resplit but cannot hit');
+  game=newGame(rules,[10,10,6,7]);game=reduceGame(game,{type:'deal'});
+  game=reduceGame(game,{type:'action',action:'stand'});
+  assert(game.round.review[0].legal.includes('hit') &&
+    Number.isFinite(game.round.review[0].evs.hit) &&
+    game.round.review[0].rules.decks===rules.decks,
+    'completed decisions retain legal actions, EVs and rules for practice');
+  game=newGame(rules,[10,6,5,10]);game=reduceGame(game,{type:'deal'});
+  game=reduceGame(game,{type:'action',action:'hit'});
+  assert(game.phase==='settled' && game.bankroll===1000 && game.needsShuffle,
+    'exhausted shoe refunds wagers');
+  game=newGame(rules,[10,6,6,10,10]);
+  game=reduceGame(game,{type:'deal'});game=reduceGame(game,{type:'action',action:'stand'});
+  assert(game.review.length===1 && game.review[0].best==='stand' &&
+    game.round.results[0]==='Win','review records best action and result');
+  let session=recordRound(newSession(1000),game.round,game.bankroll);
+  assert(session.rounds===1 && session.hands===1 && session.wins===1 &&
+    session.optimalDecisions===1 && session.net===10 && session.totalWagered===10,
+    'session aggregates a winning round and decision');
+  game=newGame(rules,[10,10,6,7]);
+  game=reduceGame(game,{type:'deal'});game=reduceGame(game,{type:'action',action:'stand'});
+  assert(game.review[0].best==='hit' && game.review[0].evCost>0,
+    'review flags a suboptimal stand');
+  game=newGame(rules,[8,6,8,10,2,3,10]);
+  game=reduceGame(game,{type:'deal'});game=reduceGame(game,{type:'action',action:'split'});
+  game=reduceGame(game,{type:'action',action:'stand'});
+  game=reduceGame(game,{type:'action',action:'stand'});
+  session=recordRound(newSession(1000),game.round,game.bankroll);
+  assert(session.hands===2 && session.splits===1 && session.totalWagered===20,
+    'split hands and extra stake count in session statistics');
+  game=newGame(rules,[10,1,6,10]);game=reduceGame(game,{type:'deal'});
+  game=reduceGame(game,{type:'insurance',take:true});
+  assert(game.review[0].best==='declineInsurance' && game.review[0].evCost>0,
+    'insurance reviewed by expected value, not the realized payout');
+  session=recordRound(newSession(1000),game.round,game.bankroll);
+  assert(session.insuranceBets===1 && session.net===0 && session.losses===1,
+    'insurance statistics preserve main-hand result and round net');
+  game=newGame(rules,[1,9,10,7]);game=reduceGame(game,{type:'deal'});
+  session=recordRound(newSession(1000),game.round,game.bankroll);
+  assert(session.blackjacks===1 && session.wins===1 && session.decisions===0,
+    'natural blackjack counts as win without a player decision');
+  let coaching=newSession(1000);
+  for(let i=0;i<50;i++) {
+    const missed=i<5;
+    const review=[{kind:'play',chosen:missed?'stand':'hit',best:'hit',
+      cards:[10,6],dealerUp:10,handIndex:0,evCost:missed?2:0}];
+    coaching=recordRound(coaching,{id:i+1,void:false,net:-10,bet:10,wagered:10,
+      results:['Lose'],review,shoeSerial:1},990-i*10);
+  }
+  assert(coaching.coachReports.length===2 && coaching.coachReports[0].milestone===25 &&
+    coaching.coachReports[0].current.topPattern.count===5,
+    'coach reports arrive at 25-hand checkpoints');
+  assert(coaching.coachReports[1].previous.optimal===20 &&
+    coaching.coachReports[1].current.optimal===25,
+    'coach compares the current 25 hands with the previous 25');
+  let splitCheckpoint=newSession(1000);
+  for(let i=0;i<24;i++) splitCheckpoint=recordRound(splitCheckpoint,
+    {id:i+1,void:false,net:0,bet:10,wagered:10,results:['Push'],review:[],shoeSerial:1},1000);
+  splitCheckpoint=recordRound(splitCheckpoint,{id:25,void:false,net:0,bet:10,wagered:40,
+    results:['Push','Push','Push','Push'],review:[],shoeSerial:1},1000);
+  assert(splitCheckpoint.hands===28 && splitCheckpoint.coachReports.length===1 &&
+    splitCheckpoint.coachReports[0].current.hands===25,
+    'split hands count toward the next exact 25-hand block');
+  const near=(actual,expected)=>Math.abs(actual-expected)<.00000051;
+  // Independent six-decimal reference EVs, Wizard of Odds Appendix 9.
+  // Six-deck S17 table, section 6ds17r4 (retrieved October 2026).
+  for(const [cards,up,expected] of [
+    [[6,5],1,[-.661883,.147596,.129710]],
+    [[1,2],5,[-.159409,.137333,.139852]],
+    [[10,2],4,[-.211115,-.210364,-.420729]],
+    [[9,3],4,[-.208039,-.215390,-.430780]]]){
+    const evs=solverFor(rules,up,true,cards).actions(cards);
+    ['stand','hit','double'].forEach((action,i)=>assert(near(evs[action],expected[i]),'published EV '+cards+' vs '+up+' '+action));
+  }
+  const oneEV=solverFor({...rules,decks:1},1,true,[6,5]).actions([6,5]);
+  assert(near(oneEV.hit,.172946)&&near(oneEV.double,.240259),'published single-deck 6+5 vs A EV');
+  assert(choice([6,5],6,rules,{funds:0})==='hit','unaffordable double falls back to hit');
+  assert(!('split' in solverFor(rules,6,true,[8,8]).actions([8,8],{funds:0})), 'unaffordable split excluded');
+  assert(decisionOptimal({chosen:'hit',best:'stand',chosenEV:.1,bestEV:.1}), 'equal EV choices are not mistakes');
+  assert(normalizeRules({decks:3,soft17:'false',maxHands:0,minBet:NaN}).decks===6,
+    'invalid stored rule values fall back safely');
+  const face={rank:11,suit:0},queen={rank:12,suit:1},king={rank:13,suit:2};
+  assert(handValue([face,queen]).total===20&&handValue([1,king]).blackjack&&hiLo(king)===-1,
+    'J/Q/K have ten value and count correctly');
+  assert(isPair([face,king]),'mixed ten-value cards may split');
+  game=newGame(rules,[face,6,queen,10,10]);game=reduceGame(game,{type:'deal'});
+  game=reduceGame(game,{type:'action',action:'stand'});
+  session=recordRound(newSession(1000),game.round,game.bankroll);
+  assert(session.twoFaceHands===1&&session.twoTenValueHands===1&&session.exposedCards===5&&
+    session.rankCounts[10]===1&&session.rankCounts[11]===1&&session.dealerBusts===1,
+    'face-card frequencies and bust statistics retain real ranks');
+  game=newGame(rules,[face,6,king,10,2,10,3,10]);game=reduceGame(game,{type:'deal'});
+  game=reduceGame(game,{type:'action',action:'split'});
+  assert(game.position===5&&game.hands[1].cards.length===1,'second split hand waits its turn to receive a card');
+  game=reduceGame(game,{type:'action',action:'hit'});
+  assert(game.active===1&&game.hands[0].result===undefined&&game.hands[1].cards[1]===3,
+    'split first hand consumes its hit before next hand gets a card');
+  game=reduceGame(game,{type:'action',action:'stand'});
+  assert(game.bankroll===1000&&game.round.results.join(',')==='Bust,Win','split ledger and bust result');
+  game=newGame(rules,[1,6,1,10,king,9,10]);game=reduceGame(game,{type:'deal'});
+  game=reduceGame(game,{type:'action',action:'split'});
+  assert(game.phase==='settled'&&game.bankroll===1020&&game.hands.every(h=>h.cards.length===2)&&
+    game.round.results.every(r=>r==='Win'),'split aces receive one card; split 21 pays even money');
+  game=newGame(rules,[8,6,8,10,8,8,8,2,3,4,10]);game=reduceGame(game,{type:'deal'});
+  for(let i=0;i<3;i++)game=reduceGame(game,{type:'action',action:'split'});
+  assert(game.hands.length===4&&!legalActions(game).includes('split'),'global four-hand split limit');
+  while(game.phase==='player')game=reduceGame(game,{type:'action',action:'stand'});
+  assert(game.round.wagered===40&&game.bankroll===1040,'all resplit stakes settle exactly once');
+  game=newGame({...rules,startingBankroll:10},[8,6,8,10,10]);game=reduceGame(game,{type:'deal'});
+  assert(!legalActions(game).includes('double')&&!legalActions(game).includes('split'),'insufficient bankroll disables extra wagers');
+  game=newGame({...rules,das:false},[8,6,8,10,3,2,10]);game=reduceGame(game,{type:'deal'});
+  game=reduceGame(game,{type:'action',action:'split'});
+  assert(!legalActions(game).includes('double'),'no-DAS rule enforced');
+  game=newGame({...rules,doubleRule:'9-11'},[1,6,6,10]);game=reduceGame(game,{type:'deal'});
+  assert(!legalActions(game).includes('double'),'restricted doubling excludes soft 17');
+  game=newGame(rules,[6,6,5,10,10,10]);game=reduceGame(game,{type:'deal'});
+  game=reduceGame(game,{type:'action',action:'double'});
+  assert(game.bankroll===1020&&game.round.wagered===20,'double gets exactly one card and double payout');
+  game=newGame({...rules,payout:1.2,minBet:11},[1,9,king,8]);game=reduceGame(game,{type:'deal'});
+  assert(game.bankroll===1013.2&&game.round.net===13.2,'6:5 payout rounds to currency precision');
+  game=newGame(rules,[1,1,king,queen]);game=reduceGame(game,{type:'deal'});
+  game=reduceGame(game,{type:'insurance',take:false});
+  assert(game.bankroll===1000&&game.round.results[0]==='Push','both naturals push');
+  game=newGame(rules,[1,1,king,queen]);game=reduceGame(game,{type:'deal'});
+  game=reduceGame(game,{type:'insurance',take:true});
+  assert(game.bankroll===1010&&game.round.net===10,'natural push with winning insurance');
+  game=newGame(rules,[10,1,9,7]);game=reduceGame(game,{type:'deal'});
+  game=reduceGame(game,{type:'insurance',take:true});game=reduceGame(game,{type:'action',action:'stand'});
+  assert(game.bankroll===1005&&game.round.wagered===15,'losing insurance deducted alongside winning main hand');
+  for(const soft17 of [false,true]){
+    game=newGame({...rules,soft17},[10,1,8,6,2]);game=reduceGame(game,{type:'deal'});
+    game=reduceGame(game,{type:'insurance',take:false});game=reduceGame(game,{type:'action',action:'stand'});
+    assert(game.position===(soft17?5:4)&&game.bankroll===(soft17?990:1010),'dealer '+(soft17?'H17':'S17')+' enforced');
+  }
+  game=newGame({...rules,peek:false},[6,1,5,queen,10]);game=reduceGame(game,{type:'deal'});
+  game=reduceGame(game,{type:'insurance',take:false});game=reduceGame(game,{type:'action',action:'double'});
+  assert(game.bankroll===980&&game.round.net===-20,'no peek: dealer blackjack takes doubled stake');
+  game=newGame({...rules,peek:false},[8,queen,8,1,3,2]);game=reduceGame(game,{type:'deal'});
+  game=reduceGame(game,{type:'action',action:'split'});
+  while(game.phase==='player')game=reduceGame(game,{type:'action',action:'stand'});
+  assert(game.bankroll===980,'no peek: dealer blackjack takes all split wagers');
+  game=newGame(rules,[10,6,6,10,10,2,3,4]);game=reduceGame(game,{type:'deal'});
+  game=reduceGame(game,{type:'rules',rules:{...rules,decks:1}});
+  assert(game.rules.decks===6&&game.pendingRules.decks===1,'rule changes deferred during current hand');
+  game=reduceGame(game,{type:'action',action:'stand'});
+  game=reduceGame(game,{type:'deal',shoe:[10,9,10,8,2,3,4,5]});
+  assert(game.rules.decks===1&&game.shoeSerial===2&&game.position===4&&game.runningCount===-2,'new rules shuffle between hands and reset count');
+  game=newGame({...rules,penetration:.5},[10,6,6,10,10,2,3,4]);game=reduceGame(game,{type:'deal'});
+  assert(game.shoeSerial===1&&game.position===4,'cut card never interrupts a live hand');
+  game=reduceGame(game,{type:'action',action:'stand'});
+  assert(game.needsShuffle&&game.position===5,'cut card schedules next-hand shuffle');
+  game=reduceGame(game,{type:'deal',shoe:[10,9,10,8,2,3,4,5]});
+  assert(game.shoeSerial===2&&game.position===4,'fresh shoe replaces old shoe only between hands');
+  // Side-bet categories use actual ranks/suits, independently of blackjack value.
+  const sideCard=(rank,suit=0)=>({rank,suit});
+  const categoryCases=[
+    ['perfectPairs',[[11,0],[11,0]],'perfect'],
+    ['perfectPairs',[[12,1],[12,2]],'colored'],
+    ['perfectPairs',[[13,0],[13,3]],'colored'],
+    ['perfectPairs',[[10,0],[10,1]],'mixed'],
+    ['perfectPairs',[[11,0],[12,0]],'lose'],
+    ['twentyOneThree',[[7,0],[7,0],[7,0]],'suitedTrips'],
+    ['twentyOneThree',[[7,0],[7,1],[7,2]],'trips'],
+    ['twentyOneThree',[[1,0],[2,0],[3,0]],'straightFlush'],
+    ['twentyOneThree',[[12,0],[13,1],[1,2]],'straight'],
+    ['twentyOneThree',[[10,0],[11,1],[12,2]],'straight'],
+    ['twentyOneThree',[[13,0],[1,1],[2,2]],'lose'],
+    ['twentyOneThree',[[10,0],[11,0],[13,0]],'flush'],
+    ['twentyOneThree',[[11,0],[12,1],[13,2]],'straight'],
+    ['twentyOneThree',[[11,0],[12,1],[10,2]],'straight'],
+    ['twentyOneThree',[[10,0],[12,1],[13,2]],'lose'],
+    ['luckyLucky',[[7,0],[7,0],[7,0]],'suited777'],
+    ['luckyLucky',[[6,1],[7,1],[8,1]],'suited678'],
+    ['luckyLucky',[[7,0],[7,1],[7,2]],'triple777'],
+    ['luckyLucky',[[8,0],[6,1],[7,2]],'run678'],
+    ['luckyLucky',[[1,0],[11,0],[12,0]],'suited21'],
+    ['luckyLucky',[[1,0],[11,1],[13,2]],'total21'],
+    ['luckyLucky',[[1,0],[1,1],[9,2]],'total21'],
+    ['luckyLucky',[[11,0],[8,1],[2,2]],'total20'],
+    ['luckyLucky',[[13,0],[7,1],[2,2]],'total19'],
+    ['luckyLucky',[[1,0],[1,1],[8,2]],'total20'],
+    ['luckyLucky',[[10,0],[10,1],[2,2]],'lose']
+  ];
+  for(const [id,values,expected]of categoryCases){
+    const cards=values.map(([rank,suit])=>sideCard(rank,suit));
+    assert(sideBetCategory(id,cards)===expected&&sideBetCategory(id,[...cards].reverse())===expected,
+      id+' category '+expected+' is independent of card order: '+JSON.stringify(values));
+  }
+  const perfectResult=sideBetResult('perfectPairs','standard',2.5,[sideCard(7),sideCard(7)]);
+  assert(perfectResult.paid===65&&perfectResult.net===62.5&&perfectResult.odds===25,
+    'x:1 side-bet payout means profit plus the original stake');
+  assert(sideBetResult('twentyOneThree','enhanced',1,Array(3).fill(sideCard(7))).paid===101,
+    'overlapping categories pay the highest category once, not accumulated payouts');
+  assert(sideBetResult('perfectPairs','invalid',1,[sideCard(7),sideCard(7)]).profile==='standard'&&
+    normalizeSideProfiles(null).luckyLucky==='standard','invalid stored side profiles fall back safely');
+  let invalidSideCards=false;try{sideBetCategory('perfectPairs',[10,10]);}catch{invalidSideCards=true;}
+  assert(invalidSideCards,'side bets reject value-only cards instead of inventing suits or ranks');
+  for(const decks of [1,2,4,6,8])for(const id of SIDE_BET_IDS){
+    const distribution=sideBetDistribution(id,decks);
+    assert(Object.values(distribution.counts).reduce((sum,n)=>sum+n,0)===distribution.combinations,
+      id+' '+decks+'-deck combinatorial counts exhaust the entire sample space');
+    assert(Math.abs(Object.values(distribution.probabilities).reduce((sum,p)=>sum+p,0)-1)<1e-12,
+      id+' '+decks+'-deck probabilities sum to one');
+    for(const profile of Object.keys(SIDE_BETS[id].profiles))assert(sideBetOdds(id,profile,decks).houseEdge>0,
+      id+' '+profile+' '+decks+'-deck preset has a fresh-shoe house advantage');
+  }
+  assert(sideBetDistribution('perfectPairs',1).counts.perfect===0&&
+    sideBetDistribution('twentyOneThree',2).counts.suitedTrips===0&&
+    sideBetDistribution('luckyLucky',2).counts.suited777===0,
+    'impossible duplicate-card wins have zero probability with insufficient decks');
+  // Independent published combination counts and six-decimal EVs, Wizard of Odds.
+  const publishedSix={
+    perfectPairs:{perfect:780,colored:936,mixed:1872,lose:44928},
+    twentyOneThree:{suitedTrips:1040,straightFlush:10368,trips:25272,straight:155520,flush:292896,lose:4528224},
+    luckyLucky:{suited777:80,suited678:864,triple777:1944,run678:12960,suited21:26568,
+      total21:406296,total20:377568,total19:364320,lose:3822720}
+  };
+  for(const id of SIDE_BET_IDS)for(const [category,n]of Object.entries(publishedSix[id]))
+    assert(sideBetDistribution(id,6).counts[category]===n,'published six-deck '+id+' combinations: '+category);
+  for(const [id,profile,expected]of [
+    ['perfectPairs','standard',-.041801],['perfectPairs','alternative',-.057878],
+    ['perfectPairs','live',-.061093],['twentyOneThree','standard',-.032386],
+    ['luckyLucky','standard',-.026556]])
+    assert(near(sideBetOdds(id,profile,6).ev,expected),'published six-deck '+id+' '+profile+' EV');
+  const enhancedEight={suitedTrips:2912,straightFlush:24576,trips:61568,straight:368640,flush:700928,lose:10753536};
+  for(const [category,n]of Object.entries(enhancedEight))
+    assert(sideBetDistribution('twentyOneThree',8).counts[category]===n,'published eight-deck 21+3 '+category+' combinations');
+  assert(near(sideBetOdds('twentyOneThree','enhanced',8).ev,-.037039),'published enhanced eight-deck 21+3 EV');
+  const allSides={perfectPairs:1,twentyOneThree:1,luckyLucky:1};
+  const prepareSides=(cards,bets=allSides,changes={})=>reduceGame(newGame({...rules,...changes},cards),
+    {type:'sideBets',bets});
+  const openingSideShoe=[sideCard(7),sideCard(7),sideCard(7),sideCard(10,3),sideCard(2),sideCard(3)];
+  let sideGame=prepareSides(openingSideShoe);
+  const beforeSides=sideGame;
+  sideGame=reduceGame(sideGame,{type:'deal'});
+  assert(beforeSides.bankroll===1000&&beforeSides.position===0&&sideGame.bankroll===1224&&
+    sideGame.phase==='player'&&sideGame.sideResults.length===3&&sideGame.runningCount===0,
+    'opening side wins credit once before player decisions without mutating input or revealing the hole card');
+  assert(reduceGame(sideGame,{type:'sideBets',bets:emptySideBets()})===sideGame,
+    'side bets and payout profiles cannot change mid-hand');
+  sideGame=reduceGame(sideGame,{type:'action',action:'stand'});
+  assert(sideGame.bankroll===1224&&sideGame.round.mainNet===-10&&sideGame.round.sideNet===234&&
+    sideGame.round.net===224&&sideGame.round.wagered===13,
+    'side wins remain independent of a losing main hand and never pay twice');
+  const sideSession=recordRound(newSession(1000),sideGame.round,sideGame.bankroll);
+  assert(sideSession.mainNet===-10&&sideSession.sideNet===234&&sideSession.sideWagered===3&&
+    sideSession.totalWagered===13&&sideSession.decisions===1&&sideSession.hands===1&&sideSession.losses===1&&
+    SIDE_BET_IDS.every(id=>sideSession.sideStats[id].bets===1&&sideSession.sideStats[id].wins===1),
+    'side statistics reconcile separately and never inflate blackjack hand or decision accuracy');
+  sideGame=prepareSides([sideCard(1),sideCard(9),sideCard(13),sideCard(8,2)]);
+  sideGame=reduceGame(sideGame,{type:'deal'});
+  assert(sideGame.bankroll===1025&&sideGame.round.mainNet===15&&sideGame.round.sideNet===10,
+    'player natural and opening side bets settle independently');
+  sideGame=prepareSides([sideCard(10),sideCard(1,2),sideCard(10,1),sideCard(13,3)]);
+  sideGame=reduceGame(sideGame,{type:'deal'});
+  assert(sideGame.phase==='insurance'&&sideGame.bankroll===997,'side payouts use dealer upcard, not hidden blackjack card');
+  sideGame=reduceGame(sideGame,{type:'insurance',take:true});
+  assert(sideGame.bankroll===1007&&sideGame.round.mainNet===-10&&sideGame.round.insuranceNet===10&&
+    sideGame.round.sideNet===7&&sideGame.round.wagered===18,
+    'dealer blackjack preserves opening side wins and resolves insurance separately');
+  sideGame=prepareSides([sideCard(8),sideCard(6,1),sideCard(8),sideCard(10,3),
+    sideCard(3,3),sideCard(2,3),sideCard(10)]);
+  sideGame=reduceGame(sideGame,{type:'deal'});sideGame=reduceGame(sideGame,{type:'action',action:'split'});
+  while(sideGame.phase==='player')sideGame=reduceGame(sideGame,{type:'action',action:'stand'});
+  assert(sideGame.bankroll===1043&&sideGame.round.mainNet===20&&sideGame.round.sideNet===23&&
+    sideGame.round.wagered===23&&sideGame.sideResults.length===3,
+    'splitting does not add new side wagers or evaluate split-card combinations');
+  sideGame=prepareSides(openingSideShoe,allSides,{startingBankroll:13});
+  sideGame=reduceGame(sideGame,{type:'deal'});
+  assert(sideGame.bankroll===237&&legalActions(sideGame).includes('split'),
+    'opening side winnings become available for casino-style split or double stakes');
+  sideGame=prepareSides(openingSideShoe,allSides,{startingBankroll:12});
+  sideGame=reduceGame(sideGame,{type:'deal'});
+  assert(sideGame.position===0&&sideGame.bankroll===12&&sideGame.phase==='betting',
+    'aggregate main-plus-side affordability checked before consuming any cards');
+  for(const amount of [-1,NaN,501]){
+    const fresh=newGame(rules,openingSideShoe),rejected=reduceGame(fresh,
+      {type:'sideBets',bets:{...emptySideBets(),perfectPairs:amount}});
+    assert(rejected.sideBets.perfectPairs===0&&rejected.bankroll===1000,'invalid side wager rejected: '+amount);
+  }
+  for(const length of [3,4]){
+    sideGame=prepareSides(openingSideShoe.slice(0,length));
+    sideGame=reduceGame(sideGame,{type:'deal'});
+    if(sideGame.phase==='player')sideGame=reduceGame(sideGame,{type:'action',action:'hit'});
+    const unchangedSession=newSession(1000);
+    assert(sideGame.round.void&&sideGame.bankroll===1000&&sideGame.sideResults.length===0&&
+      recordRound(unchangedSession,sideGame.round,sideGame.bankroll)===unchangedSession,
+      'shoe exhaustion refunds all wagers and reverses paid side winnings: '+length+' cards');
+  }
+  sideGame=prepareSides(openingSideShoe,{...emptySideBets(),perfectPairs:20});
+  sideGame=reduceGame(sideGame,{type:'rules',rules:{...rules,maxBet:10}});
+  sideGame=reduceGame(sideGame,{type:'deal',shoe:openingSideShoe});
+  assert(sideGame.bankroll===1000&&sideGame.position===0&&sideGame.message.includes('maximum'),
+    'a reduced table maximum prevents over-limit side wagers on the next deal');
+  // Published 4-8 deck S17, DAS, no-surrender total-dependent chart.
+  // 10+2 vs 4 is a composition exception in 4/6 decks, not 8 (Appendix 9).
+  function chartAction(cards,up) {
+    const v=handValue(cards),t=v.total,pair=cards[0]===cards[1],rank=cards[0];
+    if(pair) {
+      if(rank===1||rank===8) return 'split';
+      if(rank===2||rank===3||rank===7) return up>=2&&up<=7?'split':'hit';
+      if(rank===4) return up===5||up===6?'split':'hit';
+      if(rank===6) return up>=2&&up<=6?'split':'hit';
+      if(rank===9) return up>=2&&up<=6||up===8||up===9?'split':'stand';
+    }
+    if(v.soft) {
+      if(t<=18) {
+        const first=t<=14?5:t<=16?4:3;
+        if(up>=first&&up<=6) return 'double';
+      }
+      if(t<=17) return 'hit';
+      if(t===18) return up>=9||up===1?'hit':'stand';
+      return 'stand';
+    }
+    if(t===9&&up>=3&&up<=6||t===10&&up>=2&&up<=9||t===11&&up>=2&&up<=10) return 'double';
+    if(t<=11) return 'hit';
+    if(t===12) return up>=4&&up<=6?'stand':'hit';
+    if(t<=16) return up>=2&&up<=6?'stand':'hit';
+    return 'stand';
+  }
+  const chartHands=[];
+  for(let total=5;total<=20;total++) {
+    const cards=total<=11?[2,total-2]:[10,total-10];
+    if(cards[0]!==cards[1]) chartHands.push(cards);
+  }
+  for(let rank=2;rank<=9;rank++) chartHands.push([1,rank]);
+  for(let rank=1;rank<=10;rank++) chartHands.push([rank,rank]);
+  for(const decks of [4,6,8]) for(const cards of chartHands)
+    for(const up of [2,3,4,5,6,7,8,9,10,1]) {
+      const chartRules={...rules,decks};
+      const actual=bestAction(solverFor(chartRules,up,true,cards).actions(cards));
+      const expected=decks<8&&cards[0]===10&&cards[1]===2&&up===4?'hit':chartAction(cards,up);
+      assert(actual===expected,`${decks} decks: ${cards.join('+')} vs ${up}`);
+    }
+  return 'All '+passed+' self-tests passed.';
+}
+if(typeof module!=='undefined' && module.exports) module.exports={DEFAULT_RULES,SIDE_BETS,SIDE_BET_IDS,emptySideBets,normalizeSideProfiles,sideBetCategory,sideBetResult,sideBetDistribution,sideBetOdds,normalizeRules,cardRank,cardValue,isPair,decisionOptimal,roundMoney,insuranceExpectedValue,handValue,hiLo,
+  countSequence,beginnerShortcut,newBeginnerDrill,answerBeginnerDrill,insuranceShortcut,makeShoe,dealerDistribution,solverFor,bestAction,newGame,legalActions,
+  legalEVs,newSession,recordRound,buildCoachReport,trainingFamily,trainingScenarioKey,
+  analyzeTraining,reduceGame,runSelfTests};
+
+/* UI: local persistence, rendering, and interactions. */
+(function(){
+if(typeof document==='undefined') return;
+window.runSelfTests=runSelfTests;
+const $=id=>document.getElementById(id);
+const storage={available:true,read(key){try{return localStorage.getItem(key)}catch(e){this.available=false;return null}},write(key,value){try{localStorage.setItem(key,value)}catch(e){this.available=false}}};
+function savedRules(){try{const raw=storage.read('blackjack.rules.v1'),saved=raw?JSON.parse(raw):{};
+  return normalizeRules(saved||{})
+}catch(e){return {...DEFAULT_RULES}}}
+function randomWord(){const words=new Uint32Array(1);crypto.getRandomValues(words);return words[0]}
+function freshShoe(rules){return makeShoe(rules.decks,randomWord)}
+let game=newGame(savedRules(),freshShoe(savedRules()));
+try{game.sideProfiles=normalizeSideProfiles(JSON.parse(storage.read('blackjack.sideProfiles.v1')||'{}'))}catch(e){game.sideProfiles=normalizeSideProfiles()}
+const savedBankroll=Number(storage.read('blackjack.bankroll.v1'));
+if(Number.isFinite(savedBankroll) && savedBankroll>=0 && storage.read('blackjack.bankroll.v1')!==null) game.bankroll=roundMoney(savedBankroll);
+let session=newSession(game.bankroll),lastRecordedRoundId=0,coachRoundId=0;
+let lastVisual={roundId:-1,dealerCount:0,handCounts:[],revealed:false};
+let tab='play',trainerMode='beginner',liveCorrect=0,liveChecks=0,lastCheckKey='',
+  drillCorrect=0,drillChecks=0,drillStreak=0,drill=null,drillTimer=null;
+let trainingPractice=new Map(),trainingCurrentKey=null,trainingFilter=null,
+  trainingAnswered=false,trainingSelected=null;
+const beginnerDeckChoices=[1,2,4,6,8];
+const savedBeginnerDecks=Number(storage.read('blackjack.beginnerDecks.v1'));
+$('beginnerDecks').value=String(beginnerDeckChoices.includes(savedBeginnerDecks)?savedBeginnerDecks:1);
+let beginner=null,beginnerChecks=0,beginnerCorrect=0;
+const MULTIPLAYER_ENDPOINT='__MULTIPLAYER_ENDPOINT__';
+const multi={socket:null,code:'',name:'',selfId:'',state:null,legal:[],error:''};
+function multiplayerReady(){return /^https?:\/\//.test(MULTIPLAYER_ENDPOINT)}
+function multiplayerWsUrl(code){return MULTIPLAYER_ENDPOINT.replace(/^http/,'ws')+'/room/'+encodeURIComponent(code)}
+function multiSend(type,payload={}){if(multi.socket?.readyState===WebSocket.OPEN)multi.socket.send(JSON.stringify({type,...payload}))}
+function multiDisconnect(){if(multi.socket){multi.socket.close();multi.socket=null}multi.state=null;multi.legal=[];multi.selfId='';multi.code='';renderMulti()}
+function multiConnect(code,name){
+  if(!multiplayerReady()){multi.error='Multiplayer server is not configured yet.';renderMulti();return}
+  if(multi.socket)multi.socket.close();multi.code=String(code||'').trim().toUpperCase();multi.name=String(name||'Player').trim().slice(0,24)||'Player';
+  try{
+    const socket=new WebSocket(multiplayerWsUrl(multi.code));multi.socket=socket;multi.error='Connecting…';renderMulti();
+    socket.addEventListener('open',()=>{multiSend('join',{name:multi.name});multi.error='';renderMulti()});
+    socket.addEventListener('message',event=>{try{const message=JSON.parse(event.data);if(message.type==='state'){multi.selfId=message.selfId;multi.state=message.state;multi.legal=message.legalActions||[];multi.error='';renderMulti()}else if(message.type==='error'){multi.error=message.message;renderMulti()}}catch{multi.error='The room sent an unreadable update.';renderMulti()}});
+    socket.addEventListener('close',()=>{if(multi.socket===socket){multi.socket=null;if(multi.state)multi.error='Disconnected from the room.';renderMulti()}});
+    socket.addEventListener('error',()=>{if(multi.socket===socket){multi.error='Could not connect to this room.';renderMulti()}});
+  }catch{multi.error='Could not open a multiplayer connection.';renderMulti()}
+}
+async function multiCreate(){if(!multiplayerReady()){multi.error='Multiplayer server is not configured yet.';renderMulti();return}const name=$('multiName').value.trim()||'Player';$('multiStatus').textContent='Creating room…';try{const response=await fetch(MULTIPLAYER_ENDPOINT+'/create',{method:'POST'});if(!response.ok)throw new Error('create');const data=await response.json();$('multiRoomInput').value=data.code;multiConnect(data.code,name)}catch{multi.error='Could not create a room. Check the deployed room server.';renderMulti()}}
+function multiJoin(){const code=$('multiRoomInput').value.trim().toUpperCase(),name=$('multiName').value.trim()||'Player';if(!/^[A-Z0-9]{4,8}$/.test(code)){multi.error='Enter a room code with 4–8 letters or numbers.';renderMulti();return}multiConnect(code,name)}
+function multiCardHTML(card){return card?cardHTML(card):cardHTML(0,true)}
+function multiPlayerMarkup(player,state){const own=player.id===multi.selfId,active=state.players[state.activePlayer]?.id===player.id;const hands=player.hands.length?'<div class="multi-hands">'+player.hands.map((hand,index)=>'<div class="multi-hand '+(active&&index===player.activeHand?'active':'')+'"><div class="hand-title">Hand '+(index+1)+' · '+money(hand.wager)+'</div><div class="cards">'+hand.cards.map(multiCardHTML).join('')+'</div><small>'+score(hand.cards)+(hand.result?' · '+hand.result:'')+'</small></div>').join('')+'</div>':'<div class="multi-empty">Waiting for a bet</div>';
+  return '<article class="multi-seat '+(active?'active':'')+'"><div class="multi-seat-head"><span class="multi-seat-name">'+escapeHTML(player.name)+(own?' · You':'')+'</span><span class="pill">'+money(player.bankroll)+'</span></div><div class="help">Bet: '+(player.bet?money(player.bet):'—')+(player.result?' · '+player.result:'')+'</div>'+hands+'</article>'}
+function escapeHTML(value){return String(value).replace(/[&<>"']/g,character=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]))}
+function renderMulti(){
+  const connected=Boolean(multi.state),configured=multiplayerReady();$('multiLobby').classList.toggle('hidden',connected);$('multiBoard').classList.toggle('hidden',!connected);
+  $('multiCreate').disabled=!configured;$('multiJoin').disabled=!configured;
+  $('multiStatus').textContent=multi.error||(configured?'Create a room or enter a code to join one.':'Multiplayer server is not configured yet.');
+  if(!connected)return;
+  const state=multi.state;$('multiStatus').textContent=state.message||'Connected.';$('multiRoomCode').innerHTML='<span>Room code</span><strong>'+escapeHTML(state.code)+'</strong>';
+  $('multiDealerCards').innerHTML=state.dealer.map(multiCardHTML).join('')||'<span class="muted">Waiting for the deal</span>';$('multiDealerScore').textContent=state.dealerRevealed?score(state.dealer):(state.dealer.length?rank(state.dealer[0])+' showing':'—');
+  const active=state.players[state.activePlayer];$('multiTurn').textContent=state.phase==='playing'&&active?active.name+' is playing':state.phase==='settled'?'Round complete · place bets for the next round':'Place bets, then the host deals.';
+  $('multiPlayers').innerHTML=state.players.map(player=>multiPlayerMarkup(player,state)).join('')||'<div class="multi-empty">No players have joined.</div>';
+  const self=state.players.find(player=>player.id===multi.selfId);const host=state.hostId===multi.selfId;const canBet=['waiting','settled'].includes(state.phase);$('multiBetInput').disabled=!canBet;$('multiPlaceBet').disabled=!canBet||!self;$('multiStart').disabled=!host||!canBet;$('multiStart').textContent=state.phase==='settled'?'Deal next round':'Deal round';$('multiCopy').disabled=false;
+  document.querySelectorAll('#multiControls button').forEach(button=>button.disabled=!multi.legal.includes(button.dataset.multiAction));
+  $('multiHit').dataset.multiAction='hit';$('multiStand').dataset.multiAction='stand';$('multiDouble').dataset.multiAction='double';$('multiSplit').dataset.multiAction='split';
+  document.querySelectorAll('#multiControls button').forEach(button=>button.disabled=!multi.legal.includes(button.dataset.multiAction));
+}
+const labels={hit:'Hit',stand:'Stand',double:'Double',split:'Split',
+  takeInsurance:'Take insurance',declineInsurance:'Decline insurance'};
+const sideUI={perfectPairs:'sidePerfect',twentyOneThree:'sideThree',luckyLucky:'sideLucky'};
+const SIDE_QUICK_WAGER=5; // First chip placement; custom wagers are remembered for this session.
+const sideKeys={'1':'perfectPairs','2':'twentyOneThree','3':'luckyLucky'};
+const sideRecall=Object.fromEntries(SIDE_BET_IDS.map(id=>[id,SIDE_QUICK_WAGER]));
+function resetSideRecall(){for(const id of SIDE_BET_IDS)sideRecall[id]=SIDE_QUICK_WAGER;}
+for(const id of SIDE_BET_IDS){const prefix=sideUI[id];
+  $(prefix+'Profile').innerHTML=Object.entries(SIDE_BETS[id].profiles).map(([key,profile])=>'<option value="'+key+'">'+profile.name+'</option>').join('');
+  $(prefix+'Profile').value=game.sideProfiles[id];
+  $(prefix+'Description').textContent=SIDE_BETS[id].description;
+}
+const rank=card=>{const r=cardRank(card);return ({1:'A',11:'J',12:'Q',13:'K'})[r]||String(r)};
+function cardHTML(r,hidden=false,dealt=false,delay=0,revealed=false){
+  const effect=dealt?' dealt':revealed?' revealed':'';
+  const style=dealt?' style="--deal-delay:'+delay+'ms"':'';
+  const suit=typeof r==='object'?r.suit:0,symbol=['♠','♥','♦','♣'][suit],suitName=['spades','hearts','diamonds','clubs'][suit];
+  return hidden?'<div class="card back'+effect+'"'+style+' aria-label="Hidden card">♠</div>':
+  '<div class="card'+(suit===1||suit===2?' red':'')+effect+'"'+style+' aria-label="'+rank(r)+' of '+suitName+'"><span class="corner">'+rank(r)+'</span><span class="pip">'+symbol+'</span><span class="bottom">'+rank(r)+'</span></div>'}
+function score(cards){const v=handValue(cards);return v.total>21?'Bust '+v.total:(v.soft?'Soft ':'')+v.total}
+function persist(){storage.write('blackjack.rules.v1',JSON.stringify(game.pendingRules||game.rules));storage.write('blackjack.bankroll.v1',String(game.bankroll));storage.write('blackjack.sideProfiles.v1',JSON.stringify(game.sideProfiles))}
+function apply(event){game=reduceGame(game,event);
+  if(game.round && !game.round.void && game.round.id!==lastRecordedRoundId){
+    const previousReports=session.coachReports.length;
+    session=recordRound(session,game.round,game.bankroll);lastRecordedRoundId=game.round.id;
+    if(session.coachReports.length>previousReports) coachRoundId=game.round.id;
+  }
+  persist();render()}
+function render(){
+  $('bankroll').textContent=money(game.bankroll);$('currentBet').textContent=money(game.bet);
+  $('remaining').textContent=String(game.shoe.length-game.position)+' / '+game.shoe.length;
+  $('penetration').textContent=Math.round(100*game.position/game.shoe.length)+'%';
+  $('tableRuleText').textContent='PAYS '+(game.rules.payout===1.5?'3:2':'6:5')+' · '+(game.rules.soft17?'HIT':'STAND')+' ON SOFT 17';
+  const freshRound=lastVisual.roundId!==game.roundId;
+  const oldDealerCount=freshRound?0:lastVisual.dealerCount;
+  const oldHandCounts=freshRound?[]:lastVisual.handCounts;
+  const splitDealt=game.hands.length>oldHandCounts.length&&!freshRound;
+  $('dealerCards').innerHTML=game.dealer.map((c,i)=>cardHTML(c,i===1&&!game.dealerRevealed,
+    i>=oldDealerCount,freshRound?(i===0?120:360):i*110,
+    i===1&&!freshRound&&!lastVisual.revealed&&game.dealerRevealed)).join('');
+  $('dealerScore').textContent=game.dealer.length?(game.dealerRevealed?score(game.dealer):rank(game.dealer[0])+' showing'):'—';
+  $('roundState').textContent={betting:'Place bet',insurance:'Insurance',player:'Your turn',dealer:'Dealer',settled:'Hand over'}[game.phase];
+  $('hands').innerHTML=game.hands.map((h,i)=>{
+    const prior=splitDealt?1:(oldHandCounts[i]||0);
+    return '<div class="hand '+(game.phase==='player'&&i===game.active?'active':'')+'"><div class="hand-title">Hand '+(i+1)+' <span class="bet-chip">'+money(h.wager)+'</span></div><div class="cards">'+h.cards.map((c,j)=>cardHTML(c,false,j>=prior,freshRound?(j===0?0:240):j*90)).join('')+'</div><small>'+score(h.cards)+(h.result?' · '+h.result:'')+'</small></div>'
+  }).join('') || '<span class="muted">Place a bet to see the cards dealt.</span>';
+  lastVisual={roundId:game.roundId,dealerCount:game.dealer.length,
+    handCounts:game.hands.map(h=>h.cards.length),revealed:game.dealerRevealed};
+  const completed=game.phase==='settled'&&game.round&&!game.round.void;
+  const reviewCue=completed&&game.round.review.length?
+    ' · '+game.round.review.filter(decisionOptimal).length+'/'+game.round.review.length+
+    ' best decisions — review below.':'';
+  const coachCue=completed&&game.round.id===coachRoundId?' · Your 25-hand coaching review is ready.':'';
+  $('message').textContent=game.message+reviewCue+coachCue+
+    (storage.available?'':' · Storage unavailable: this session will not be saved.');
+  $('betControls').classList.toggle('hidden',!['betting','settled'].includes(game.phase));
+  $('insuranceControls').classList.toggle('hidden',game.phase!=='insurance');
+  $('playControls').classList.toggle('hidden',game.phase!=='player');
+  const betRules=game.pendingRules||game.rules;
+  $('betInput').min=betRules.minBet;$('betInput').max=betRules.maxBet;
+  if(document.activeElement!==$('betInput')) $('betInput').value=game.bet;
+  renderSideBets();
+  $('takeInsurance').disabled=game.bankroll<game.bet/2;
+  const legal=legalActions(game);
+  document.querySelectorAll('[data-action]').forEach(button=>button.disabled=!legal.includes(button.dataset.action));
+  $('countAccuracy').textContent='Accuracy: '+liveCorrect+'/'+liveChecks;
+  $('liveCountValue').classList.toggle('hidden',!$('showLiveCount').checked);
+  $('liveCountValue').querySelector('strong').textContent=String(game.runningCount);
+  renderReview();
+  renderPlayCoach();
+  renderMulti();
+  if(tab==='stats') renderStats();
+  if(tab==='training') renderTraining();
+}
+function reason(action,cards,up){const v=handValue(cards),u=rank(up);up=cardValue(up);
+  if(action==='split') return cardValue(cards[0])===1?'Split aces; each receives one card.':'These two '+cardValue(cards[0])+'-value cards have better value as separate hands against dealer '+u+'.';
+  if(action==='double') return 'Your '+(v.soft?'soft ':'')+v.total+' has a favorable one-card draw against dealer '+u+'.';
+  if(action==='stand') return up>=4&&up<=6?'Dealer '+u+' is bust-prone; standing protects your hand.':'Standing has the highest expected value against dealer '+u+'.';
+  return 'Drawing improves this hand more than standing against dealer '+u+'.';
+}
+function readSideBets(){return {bets:Object.fromEntries(SIDE_BET_IDS.map(id=>[id,Number($(sideUI[id]+'Stake').value)])),
+  profiles:Object.fromEntries(SIDE_BET_IDS.map(id=>[id,$(sideUI[id]+'Profile').value]))};}
+function syncSideBets(){if(!['betting','settled'].includes(game.phase))return;
+  const config=readSideBets();game=reduceGame(game,{type:'sideBets',...config});persist();render();}
+function toggleSideBet(id){
+  if(!SIDE_BET_IDS.includes(id)||!['betting','settled'].includes(game.phase))return;
+  const rules=game.pendingRules||game.rules,config=readSideBets(),current=config.bets[id];
+  if(Number.isFinite(current)&&current>0&&current<=rules.maxBet)sideRecall[id]=roundMoney(current);
+  config.bets[id]=current>0?0:Math.min(sideRecall[id],rules.maxBet);
+  if(SIDE_BET_IDS.some(key=>!Number.isFinite(config.bets[key])||config.bets[key]<0||config.bets[key]>rules.maxBet)){
+    game.message='Enter valid side wagers or press X to clear them.';render();return;
+  }
+  const main=Number($('betInput').value),side=roundMoney(SIDE_BET_IDS.reduce((sum,key)=>sum+config.bets[key],0));
+  if(config.bets[id]>0&&(!Number.isFinite(main)||main<rules.minBet||main>rules.maxBet)){
+    game.message='Enter a valid main bet before adding a side wager.';render();return;
+  }
+  if(config.bets[id]>0&&roundMoney(main+side)>game.bankroll){
+    game.message='Not enough bankroll for the main bet plus this side wager.';render();return;
+  }
+  game.message=SIDE_BETS[id].name+(config.bets[id]>0?' set to '+money(config.bets[id])+' for the next deal.':' removed from the next deal.');
+  apply({type:'sideBets',...config});
+}
+function clearSideBets(){
+  if(!['betting','settled'].includes(game.phase))return;
+  for(const id of SIDE_BET_IDS)if(game.sideBets[id]>0)sideRecall[id]=game.sideBets[id];
+  game.message='Side bets cleared. The next deal uses only your main bet.';
+  apply({type:'sideBets',bets:emptySideBets()});
+}
+function renderSideBets(){
+  const canBet=['betting','settled'].includes(game.phase),rules=canBet?(game.pendingRules||game.rules):game.rules;
+  for(const id of SIDE_BET_IDS){const prefix=sideUI[id],input=$(prefix+'Stake'),select=$(prefix+'Profile');
+    input.max=rules.maxBet;input.disabled=!canBet;select.disabled=!canBet;
+    if(!canBet||document.activeElement!==input)input.value=game.sideBets[id];
+    if(!canBet||document.activeElement!==select)select.value=game.sideProfiles[id];
+    if(game.sideBets[id]>0)sideRecall[id]=game.sideBets[id];
+    const odds=sideBetOdds(id,game.sideProfiles[id],rules.decks),pays=SIDE_BETS[id].profiles[game.sideProfiles[id]].pays;
+    $(prefix+'Odds').textContent='Fresh '+rules.decks+'-deck shoe · win '+(100*odds.winProbability).toFixed(2)+'% · house edge '+(100*odds.houseEdge).toFixed(2)+'%';
+    $(prefix+'Pays').innerHTML=Object.entries(pays).map(([category,pay])=>'<div><span>'+SIDE_BETS[id].categories[category]+' · '+(100*odds.probabilities[category]).toFixed(4)+'%</span><strong>'+pay+':1</strong></div>').join('');
+  }
+  const requested=readSideBets().bets,side=roundMoney(SIDE_BET_IDS.reduce((sum,id)=>sum+requested[id],0)),main=Number($('betInput').value),total=roundMoney(main+side);
+  const valid=SIDE_BET_IDS.every(id=>Number.isFinite(requested[id])&&requested[id]>=0&&requested[id]<=rules.maxBet)&&
+    Number.isFinite(main)&&main>=rules.minBet&&main<=rules.maxBet;
+  $('sideStakeSummary').textContent=Number.isFinite(side)?money(side):'Invalid wager';
+  $('sideTotalStake').textContent=!canBet?'Opening wagers: '+money(game.bet+side)+' ('+money(game.bet)+' main + '+money(side)+' side). Side bets locked until the hand ends.':
+    valid?'Total on next deal: '+money(total)+' ('+money(main)+' main + '+money(side)+' side).'+
+    (total>game.bankroll?' Exceeds your bankroll.':''):'Enter valid main and side wagers within the table limits.';
+  $('sideKeyboardHelp').textContent=canBet?'Click a numbered spot on the table or press 1 / 2 / 3. The first wager is £5 (up to the table maximum); later taps reuse your last amount. Change amounts below. X clears all side bets.':
+    'Side bets settle from the opening deal. Wagers are locked until the hand ends.';
+  $('clearSideBets').disabled=!canBet||SIDE_BET_IDS.every(id=>requested[id]===0);
+  for(const [key,id]of Object.entries(sideKeys)){
+    const prefix=sideUI[id],stake=requested[id],selected=Number.isFinite(stake)&&stake>0,
+      add=Math.min(sideRecall[id],rules.maxBet),button=$(prefix+'Toggle');
+    const affordable=valid&&roundMoney(total+add)<=game.bankroll;
+    button.disabled=!canBet||!selected&&!affordable;
+    button.setAttribute('aria-pressed',String(selected));
+    button.setAttribute('aria-label',SIDE_BETS[id].name+': '+(selected?'remove '+money(stake):'place '+money(add))+' wager; key '+key);
+    $(prefix+'Chip').textContent=selected?money(stake):'';
+    $(prefix+'Chip').classList.toggle('hidden',!selected);
+    const result=game.sideResults.find(item=>item.id===id);
+    $(prefix+'State').textContent=canBet?(selected?'Next deal · press '+key+' to remove':
+      !valid?'Enter valid wagers':!affordable?'Not enough bankroll':'Press '+key+' to place '+money(add)):
+      result?(result.paid?'Won '+signedMoney(result.net):'No match '+signedMoney(result.net))+' · locked':'Not wagered this hand';
+  }
+  $('dealBtn').disabled=game.bankroll<rules.minBet||!valid||total>game.bankroll;
+  const results=game.sideResults||[];$('sideResultPanel').classList.toggle('hidden',!results.length);
+  $('sideResults').innerHTML=results.map(result=>'<div class="side-result'+(result.paid?' win':'')+'"><strong>'+SIDE_BETS[result.id].name+' · '+
+    (result.category==='lose'?'No winning combination':SIDE_BETS[result.id].categories[result.category])+' · '+signedMoney(result.net)+'</strong><small>Bet '+money(result.stake)+
+    ' · returned '+money(result.paid)+' · '+(result.odds<0?'lost':result.odds+':1')+' · preset '+SIDE_BETS[result.id].profiles[result.profile].name+'</small></div>').join('');
+}
+function signedMoney(value){return (value>=0?'+':'−')+money(Math.abs(value))}
+function renderReview(){
+  const round=game.round,visible=game.phase==='settled'&&round&&!round.void;
+  $('reviewPanel').classList.toggle('hidden',!visible);
+  if(!visible)return;
+  const decisions=round.review,correct=decisions.filter(decisionOptimal).length;
+  const missed=decisions.reduce((sum,item)=>sum+item.evCost,0);
+  $('reviewBadge').textContent=decisions.length?correct+' / '+decisions.length+' best choices':'No decisions needed';
+  $('reviewSummary').textContent=decisions.length?
+    'For the decisions you faced, '+(correct===decisions.length?'you chose the best legal action every time.':
+      'the better choices are shown below. Estimated EV given up: '+money(missed)+'.'):
+    (round.results.includes('Blackjack')?'Blackjack dealt — there was no player decision to make.':
+      'This hand resolved before you had a player decision.');
+  $('reviewSteps').innerHTML=decisions.map(item=>{
+    const good=decisionOptimal(item);
+    const situation=(item.kind==='insurance'?'Insurance':'Hand '+(item.handIndex+1))+' · '+
+      item.cards.map(rank).join(' · ')+' vs '+rank(item.dealerUp);
+    const explanation=item.kind==='insurance'?'Insurance has negative expected value without a count-based edge.':
+      reason(item.best,item.cards,item.dealerUp);
+    return '<div class="review-step '+(good?'good':'missed')+'"><div class="review-cards">'+situation+'</div>'+
+      '<div class="review-detail"><strong>'+(good?'Correct: '+labels[item.chosen]:
+        'You: '+labels[item.chosen]+' · Best: '+labels[item.best])+'</strong><small>'+explanation+'</small></div>'+
+      '<div class="review-cost">'+(good?'Best play':'≈ '+money(item.evCost)+' EV')+'</div></div>'
+  }).join('')+(correct<decisions.length?'<button type="button" class="action primary review-train" data-train-review>Practise missed choices →</button>':'');
+}
+function percent(n,d){return d?(100*n/d).toFixed(1)+'%':'—'}
+function metricRows(rows){return rows.map(([name,value])=>'<div><span>'+name+'</span><strong>'+value+'</strong></div>').join('')}
+function coachCopy(report){
+  const current=report.current,previous=report.previous,pattern=current.topPattern;
+  let title,focus,example='';
+  if(!current.decisions){
+    title='Not enough decisions yet';
+    focus='This block had no player choices to compare. Keep playing; the next checkpoint will review the decisions you face.';
+  }else if(!pattern){
+    title='No recurring decision leak';
+    focus='Every recorded choice matched the best legal action. Keep checking Double and Split before committing to Hit or Stand.';
+  }else{
+    title=pattern.count>1?'Most costly repeat: '+labels[pattern.chosen]+' instead of '+labels[pattern.best]:
+      'One costly choice to revisit';
+    if(pattern.best==='double') focus='Before acting on a two-card hand, pause to compare Double with Hit or Stand whenever Double is available.';
+    else if(pattern.best==='split') focus='When you are dealt a pair, compare Split with playing the combined total before choosing an action.';
+    else if(pattern.best==='hit') focus='Before standing, check whether another card has better expected value against the dealer’s upcard.';
+    else if(pattern.best==='stand') focus='Before hitting, check whether standing protects a better expected value against the dealer’s upcard.';
+    else focus='Decline insurance when following this basic-strategy model; it is a negative expected-value side bet.';
+    const item=pattern.example;
+    example='Example: '+item.cards.map(rank).join('+')+' vs dealer '+rank(item.dealerUp)+
+      ' — '+labels[item.best]+' was worth about '+money(item.evCost)+' more than '+labels[item.chosen]+
+      ' on that decision. This pattern occurred '+pattern.count+' time'+(pattern.count===1?'':'s')+
+      ', with about '+money(pattern.evCost)+' total EV missed.';
+  }
+  let trend='First 25-hand baseline. The next checkpoint will show how your decision quality changes.';
+  if(previous&&previous.decisions&&current.decisions){
+    const pointChange=100*(current.optimal/current.decisions-previous.optimal/previous.decisions);
+    const costChange=current.evMissed/current.decisions-previous.evMissed/previous.decisions;
+    const accuracy=Math.abs(pointChange)<1?'held roughly steady':
+      (pointChange>0?'improved':'fell')+' by '+Math.abs(pointChange).toFixed(1)+' percentage points';
+    const cost=Math.abs(costChange)<0.01?'held roughly steady':
+      (costChange<0?'fell':'rose')+' by '+money(Math.abs(costChange))+' per decision';
+    trend='Versus the previous 25 hands, decision accuracy '+accuracy+'; estimated EV missed '+cost+'.';
+  }else if(previous) trend='The two blocks did not have enough comparable decisions for a reliable trend.';
+  return {title,focus,example,trend};
+}
+function coachReportMarkup(report){
+  const c=report.current,copy=coachCopy(report);
+  return '<div class="coach-report"><div class="coach-metrics">'+
+    '<div><span>Best choices</span><strong>'+percent(c.optimal,c.decisions)+'</strong></div>'+
+    '<div><span>Decisions reviewed</span><strong>'+c.decisions+'</strong></div>'+
+    '<div><span>Estimated EV missed</span><strong>'+money(c.evMissed)+'</strong></div></div>'+
+    '<p class="coach-trend">'+copy.trend+'</p>'+
+    '<div class="coach-focus"><strong>Focus for the next 25 hands</strong><p>'+copy.focus+'</p></div>'+
+    (copy.example?'<p class="coach-example">'+copy.example+'</p>':'')+
+    '<p class="coach-outcomes">This block: '+c.wins+' wins · '+c.losses+' losses · '+c.pushes+
+    ' pushes. Short-run results can differ from decision quality.</p></div>';
+}
+function renderPlayCoach(){
+  const report=session.coachReports[session.coachReports.length-1];
+  const visible=Boolean(report&&game.phase==='settled'&&game.round&&!game.round.void&&
+    game.round.id===coachRoundId);
+  $('playCoach').classList.toggle('hidden',!visible);
+  if(!visible)return;
+  $('playCoachTitle').textContent='After '+report.milestone+' hands: '+coachCopy(report).title;
+  $('playCoachBody').innerHTML=coachReportMarkup(report);
+}
+function chooseTrainingScenario(profile,excludeKey){
+  const focused=trainingFilter?profile.scenarios.filter(s=>s.patternKey===trainingFilter):profile.scenarios;
+  if(!focused.length)return null;
+  const unmastered=focused.filter(s=>(trainingPractice.get(s.key)?.streak||0)<2);
+  let pool=unmastered.length?unmastered:focused;
+  if(pool.length>1) pool=pool.filter(s=>s.key!==excludeKey);
+  pool.sort((a,b)=>{
+    const left=trainingPractice.get(a.key)||{streak:0,attempts:0};
+    const right=trainingPractice.get(b.key)||{streak:0,attempts:0};
+    return left.streak-right.streak||left.attempts-right.attempts||
+      b.totalGap-a.totalGap||b.count-a.count;
+  });
+  return pool[0]||null;
+}
+function startTraining(patternKey=null){trainingFilter=patternKey;trainingCurrentKey=null;
+  trainingAnswered=false;trainingSelected=null;renderTraining()}
+function nextTrainingQuestion(){if(!trainingAnswered)return;
+  const next=chooseTrainingScenario(analyzeTraining(session.handHistory),trainingCurrentKey);
+  trainingCurrentKey=next?.key||null;trainingAnswered=false;trainingSelected=null;renderTraining()}
+function answerTraining(action){if(!trainingCurrentKey||trainingAnswered)return;
+  const scenario=analyzeTraining(session.handHistory).scenarios.find(s=>s.key===trainingCurrentKey);
+  if(!scenario||!scenario.example.legal.includes(action))return;
+  const practice=trainingPractice.get(scenario.key)||{attempts:0,correct:0,streak:0};
+  const optimal=decisionOptimal({...scenario.example,chosen:action,chosenEV:scenario.example.evs?.[action]});
+  practice.attempts++;if(optimal){practice.correct++;practice.streak++}else practice.streak=0;
+  trainingPractice.set(scenario.key,practice);trainingAnswered=true;trainingSelected=action;
+  renderTraining();$('trainingNext').focus()}
+function renderTraining(){const profile=analyzeTraining(session.handHistory);
+  const attempts=[...trainingPractice.values()].reduce((n,item)=>n+item.attempts,0);
+  const correct=[...trainingPractice.values()].reduce((n,item)=>n+item.correct,0);
+  const mastered=profile.scenarios.filter(s=>(trainingPractice.get(s.key)?.streak||0)>=2).length;
+  $('trainingDecisions').textContent=String(profile.decisions);
+  $('trainingMisses').textContent=String(profile.misses);
+  $('trainingAccuracy').textContent=percent(correct,attempts);
+  $('trainingMastered').textContent=mastered+' / '+profile.scenarios.length;
+  $('trainingPatternCount').textContent=profile.patterns.length+' pattern'+(profile.patterns.length===1?'':'s');
+  const focused=profile.patterns.find(p=>p.key===trainingFilter);
+  if(trainingFilter&&!focused) trainingFilter=null;
+  $('trainingFocusBadge').textContent=focused?'Focused: '+focused.family:'All mistakes';
+  $('trainingPatterns').innerHTML=profile.patterns.length?profile.patterns.map((p,index)=>
+    '<button type="button" class="training-pattern'+(p.key===trainingFilter?' active':'')+'" data-pattern-index="'+index+'"><strong>'+p.family+'</strong><small>'+p.count+' missed · '+labels[p.chosen]+' instead of '+labels[p.best]+'</small><small>≈ '+money(p.totalCost)+' total EV missed · Practise this pattern →</small></button>').join(''):
+    '<p class="training-empty-note">No mistakes recorded yet. Good decisions on a losing hand will stay out of this list.</p>';
+  const trend=profile.trend;
+  if(trend){const delta=100*(trend.recentRate-trend.previousRate);
+    $('trainingTrend').innerHTML='<div class="training-trend-value">'+(delta>0?'+':'')+delta.toFixed(1)+' points</div>'+  
+      '<div class="training-trend-detail">Best-action rate: '+percent(trend.previousRate*10,10)+' in the previous 10 decisions → '+percent(trend.recentRate*10,10)+' in the latest 10.</div>'+
+      '<p class="help">'+(delta>0?'You are choosing the best action more often recently.':delta<0?'Recent choices need more attention; practise the focus areas below.':'Decision accuracy is steady across these two small windows.')+'</p>';
+  }else $('trainingTrend').innerHTML='<p class="training-empty-note">'+profile.decisions+' / 20 decisions recorded. Trend comparison begins after 20 decisions.</p>';
+  const hasScenarios=profile.scenarios.length>0;
+  $('trainingEmpty').classList.toggle('hidden',hasScenarios);
+  $('trainingQuestion').classList.toggle('hidden',!hasScenarios);
+  if(!hasScenarios)return;
+  let scenario=profile.scenarios.find(s=>s.key===trainingCurrentKey);
+  if(!scenario||trainingFilter&&scenario.patternKey!==trainingFilter){scenario=chooseTrainingScenario(profile,null);
+    trainingCurrentKey=scenario.key;trainingAnswered=false;trainingSelected=null}
+  const item=scenario.example,rules=item.rules||game.rules;
+  $('trainingQuestionTitle').textContent=trainingFamily(item)+' vs dealer '+rank(item.dealerUp);
+  $('trainingQuestionCount').textContent=scenario.count+' missed here';
+  $('trainingContext').textContent='From round '+item.roundId+' · '+rules.decks+' deck'+(rules.decks===1?'':'s')+
+    ' · '+(rules.soft17?'H17':'S17')+' · '+(rules.das?'DAS':'No DAS')+' · Double: '+
+    (rules.doubleRule==='any'?'any two cards':'9–11 only')+'.';
+  $('trainingDealer').innerHTML=cardHTML(item.dealerUp);
+  $('trainingPlayer').innerHTML=item.cards.map(c=>cardHTML(c)).join('');
+  const choiceOrder=['hit','stand','double','split','declineInsurance','takeInsurance'];
+  $('trainingChoices').innerHTML=choiceOrder.filter(action=>item.legal.includes(action)).map(action=>
+    '<button type="button" class="action'+(trainingAnswered&&action===item.best?' primary':'')+'" data-train-action="'+action+'"'+
+    (trainingAnswered?' disabled':'')+'>'+labels[action]+' <kbd>'+
+    (action==='takeInsurance'?'A':action==='declineInsurance'?'D':action[0].toUpperCase())+'</kbd></button>').join('');
+  $('trainingFeedback').classList.toggle('hidden',!trainingAnswered);
+  const optimalAnswer=decisionOptimal({...item,chosen:trainingSelected,chosenEV:item.evs?.[trainingSelected]});
+  $('trainingFeedback').classList.toggle('correct',trainingAnswered&&optimalAnswer);
+  $('trainingFeedback').classList.toggle('wrong',trainingAnswered&&!optimalAnswer);
+  if(trainingAnswered){const explanation=item.kind==='insurance'?
+      'Without a count-based edge, insurance is a negative expected-value side bet.':
+      reason(item.best,item.cards,item.dealerUp);
+    const streak=trainingPractice.get(scenario.key)?.streak||0;
+    const evs=Object.entries(item.evs||{}).sort((a,b)=>b[1]-a[1]).map(([a,value])=>
+      labels[a]+' '+(value>=0?'+':'')+value.toFixed(3)).join(' · ');
+    $('trainingFeedback').innerHTML='<strong>'+(optimalAnswer?'Correct.':'Not quite — '+labels[item.best]+' was best.')+'</strong>'+ 
+      '<p>'+explanation+'</p><p>In the original hand, you chose '+labels[item.chosen]+'. This decision cost about '+money(item.evCost)+' in estimated EV at that wager.</p>'+ 
+      '<small>EV per £1 '+(item.kind==='insurance'?'insurance':'hand')+' wager: '+evs+'.</small><p class="help">'+
+      (streak>=2?'Mastered: at least two correct answers in a row.':'Practice streak: '+streak+' / 2 correct in a row to master this situation.')+'</p>';
+  }
+  $('trainingNext').classList.toggle('hidden',!trainingAnswered);
+  $('trainingAll').classList.toggle('hidden',!trainingFilter);
+}
+function renderStats(){
+  const s=session;
+  $('statNet').textContent=signedMoney(s.net);$('statNet').classList.toggle('negative',s.net<0);
+  $('statNet').classList.toggle('positive',s.net>0);
+  $('statYield').textContent=s.totalWagered?percent(s.net,s.totalWagered)+' return on wagers':'No completed wagers yet';
+  $('statWinRate').textContent=percent(s.wins,s.hands);
+  $('statDecisionRate').textContent=percent(s.optimalDecisions,s.decisions);
+  const completedInBlock=s.hands%25;
+  $('coachNext').textContent=(25-completedInBlock)+' hands until next review';
+  $('coachProgress').style.width=(completedInBlock/25*100)+'%';
+  const latest=s.coachReports[s.coachReports.length-1];
+  $('coachLatest').innerHTML=latest?'<div class="coach-latest"><span class="eyebrow">Latest · hand '+latest.milestone+
+    '</span><h3>'+coachCopy(latest).title+'</h3>'+coachReportMarkup(latest)+'</div>':
+    '<p class="coach-empty">'+completedInBlock+' of 25 hands completed. Your first guidance report appears at hand 25.</p>';
+  const older=s.coachReports.slice(0,-1).reverse();
+  $('coachHistory').innerHTML=older.length?'<details><summary>Earlier checkpoints ('+older.length+')</summary>'+
+    older.map(report=>'<div class="coach-archive"><h3>Hand '+report.milestone+' · '+coachCopy(report).title+
+      '</h3>'+coachReportMarkup(report)+'</div>').join('')+'</details>':'';
+  for(const [id,value] of Object.entries({statOpening:money(s.openingBankroll),statCurrent:money(game.bankroll),
+    statRounds:s.rounds,statHands:s.hands,statWins:s.wins,statLosses:s.losses,
+    statPushes:s.pushes,statBlackjacks:s.blackjacks})) $(id).textContent=String(value);
+  const streak=s.currentStreak>0?s.currentStreak+' winning':s.currentStreak<0?-s.currentStreak+' losing':'—';
+  $('tableActivity').innerHTML=metricRows([
+    ['Total wagered',money(s.totalWagered)],['Average opening bet',s.rounds?money(s.openingBets/s.rounds):'—'],
+    ['Largest round win',s.largestWin?money(s.largestWin):'—'],['Largest round loss',s.largestLoss?money(s.largestLoss):'—'],
+    ['Current round streak',streak],['Longest win / loss streak',s.longestWinStreak+' / '+s.longestLossStreak],
+    ['Doubles / splits',s.doubles+' / '+s.splits],['Insurance bets',String(s.insuranceBets)],
+    ['Shoes used',String(s.shoesUsed)],['Player busts',s.playerBusts+' / '+s.hands],
+    ['Dealer busts / dealer-play rounds',s.dealerBusts+' / '+s.dealerPlayedRounds]]);
+  $('sideStatsTotals').innerHTML=metricRows([
+    ['Blackjack main-hand net',signedMoney(s.mainNet)],['Insurance net',signedMoney(s.insuranceNet)],
+    ['Side-bet net',signedMoney(s.sideNet)],['Side-bet total wagered',money(s.sideWagered)]]);
+  $('sideStatsCards').innerHTML=SIDE_BET_IDS.map(id=>{const stat=s.sideStats[id];return '<div class="side-card"><h3>'+SIDE_BETS[id].name+'</h3><div class="metric-list">'+
+    metricRows([['Bets / wins',stat.bets+' / '+stat.wins],['Observed win rate',percent(stat.wins,stat.bets)],
+      ['Total wagered',money(stat.wagered)],['Net result',signedMoney(stat.net)],['Return on wagers',percent(stat.net,stat.wagered)]])+'</div></div>'}).join('');
+  $('dealStats').innerHTML=metricRows([
+    ['Two face cards (J, Q, K)',s.twoFaceHands+' / '+s.rounds+' · '+percent(s.twoFaceHands,s.rounds)],
+    ['Two 10-value cards (10, J, Q, K)',s.twoTenValueHands+' / '+s.rounds+' · '+percent(s.twoTenValueHands,s.rounds)],
+    ['Natural blackjacks dealt (including pushes)',s.openingBlackjacks+' / '+s.rounds+' · '+percent(s.openingBlackjacks,s.rounds)],
+    ['Cards exposed in completed rounds',String(s.exposedCards)]]);
+  $('rankFrequencies').innerHTML=s.rankCounts.map((count,index)=>'<div class="rank-frequency"><strong>'+rank(index+1)+'</strong><span>'+count+'</span><small>'+percent(count,s.exposedCards)+'</small></div>').join('');
+  const decks=game.rules.decks,total=52*decks,denominator=total*(total-1);
+  $('dealBaseline').textContent='Fresh '+decks+'-deck reference: two face cards '+(100*12*decks*(12*decks-1)/denominator).toFixed(2)+'%; two 10-value cards '+(100*16*decks*(16*decks-1)/denominator).toFixed(2)+'%; natural blackjack '+(100*2*4*decks*16*decks/denominator).toFixed(2)+'%. Reference only: used-shoe composition and rule changes affect comparisons.';
+  $('decisionStats').innerHTML=metricRows([
+    ['Decisions reviewed',String(s.decisions)],['Best legal action chosen',String(s.optimalDecisions)],
+    ['Decision accuracy',percent(s.optimalDecisions,s.decisions)],
+    ['Estimated EV given up',money(s.evMissed)]]);
+  $('countStats').innerHTML=metricRows([
+    ['Beginner cards answered',String(beginnerChecks)],['Beginner card-value accuracy',percent(beginnerCorrect,beginnerChecks)],
+    ['Live checks',String(liveChecks)],['Live count accuracy',percent(liveCorrect,liveChecks)],
+    ['Speed drills',String(drillChecks)],['Speed drill accuracy',percent(drillCorrect,drillChecks)],
+    ['Current drill streak',String(drillStreak)]]);
+  const values=[s.openingBankroll,...s.history.map(item=>item.bankroll)];
+  const low=values.reduce((minimum,value)=>Math.min(minimum,value),Infinity);
+  const high=values.reduce((maximum,value)=>Math.max(maximum,value),-Infinity);
+  const span=Math.max(high-low,1);
+  const points=values.map((value,i)=>[14+(values.length===1?0:i*572/(values.length-1)),
+    high===low?80:146-(value-low)/span*120]);
+  const line=points.map(([x,y])=>x.toFixed(1)+','+y.toFixed(1)).join(' ');
+  const fill='14,150 '+line+' '+points[points.length-1][0].toFixed(1)+',150';
+  $('bankrollChart').innerHTML=s.history.length?
+    '<svg viewBox="0 0 600 160" role="img" aria-label="Bankroll path from '+money(s.openingBankroll)+' to '+money(s.history[s.history.length-1].bankroll)+'"><polygon points="'+fill+'" fill="#d4bf7230"/><polyline points="'+line+'" fill="none" stroke="#e8cf83" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+points[points.length-1][0].toFixed(1)+'" cy="'+points[points.length-1][1].toFixed(1)+'" r="5" fill="#f3e2ad"/></svg>':
+    '<div class="muted" style="display:grid;place-items:center;height:100%">Play a hand to see your bankroll path.</div>';
+  $('chartStart').textContent='Open '+money(s.openingBankroll);
+  $('chartEnd').textContent='Latest '+money(s.history.length?s.history[s.history.length-1].bankroll:s.openingBankroll);
+  $('recentRounds').innerHTML=s.history.length?s.history.slice(-8).reverse().map(item=>
+    '<div class="recent-row"><span>#'+item.number+'</span><span>'+item.results.join(' · ')+' · bet '+money(item.bet)+'</span><span class="'+(item.net>0?'positive':item.net<0?'negative':'')+'">'+signedMoney(item.net)+'</span></div>').join(''):
+    '<p class="muted">No completed rounds yet.</p>';
+  $('resetStats').disabled=!['betting','settled'].includes(game.phase);
+}
+function switchTab(next){tab=next;document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+tab));
+  moveSurface();render()}
+function moveSurface(){if(tab==='stats'||tab==='training'||tab==='multi')return;const host=tab==='play'?$('playHost'):$('liveHost');host.appendChild($('gameSurface'))}
+function switchTrainer(next){trainerMode=next;document.querySelectorAll('[data-trainer]').forEach(b=>b.classList.toggle('active',b.dataset.trainer===next));
+  $('trainerBeginner').classList.toggle('hidden',next!=='beginner');$('trainerLearn').classList.toggle('hidden',next!=='learn');$('trainerLive').classList.toggle('hidden',next!=='live');$('trainerDrill').classList.toggle('hidden',next!=='drill');if(next==='live') moveSurface()}
+function startBeginner(){
+  const requested=Number($('beginnerDecks').value),decks=beginnerDeckChoices.includes(requested)?requested:1;
+  $('beginnerDecks').value=String(decks);storage.write('blackjack.beginnerDecks.v1',String(decks));
+  beginner=newBeginnerDrill(makeShoe(decks,randomWord));renderBeginner(true);$('beginnerPlus').focus();
+}
+function answerBeginner(value){
+  if(!beginner)return;
+  const next=answerBeginnerDrill(beginner,value);if(next===beginner)return;
+  beginner=next;beginnerChecks++;if(beginner.lastAnswer.correct)beginnerCorrect++;
+  renderBeginner(true);if(beginner.complete)$('beginnerStart').focus();
+}
+function renderBeginner(flip=false){
+  const active=Boolean(beginner&&!beginner.complete),answered=beginner?.answered||0,total=beginner?.cards.length||0;
+  document.querySelectorAll('[data-beginner-value]').forEach(button=>button.disabled=!active);
+  $('beginnerStart').textContent=beginner?'Start fresh deck':'Start deck';
+  $('beginnerStage').innerHTML=beginner?cardHTML(beginner.cards[Math.min(answered,total-1)],false,false,0,flip)+
+    (beginner.complete?'<strong>Deck complete · '+beginner.correct+' / '+total+' correct</strong>':''):
+    cardHTML(0,true);
+  $('beginnerProgressText').textContent=beginner?(beginner.complete?'All '+total+' cards answered.':'Card '+(answered+1)+' of '+total+' · '+answered+' answered')+
+    ' · '+(total/52)+' deck'+(total===52?'':'s'):'Choose your decks and start. No timer — go at your own pace.';
+  $('beginnerProgress').style.width=(total?100*answered/total:0)+'%';
+  $('beginnerAccuracy').textContent=percent(beginner?.correct||0,answered);
+  $('beginnerStreak').textContent=String(beginner?.streak||0);
+  $('beginnerCount').textContent=String(beginner?.count||0);
+  $('beginnerSessionAccuracy').textContent=percent(beginnerCorrect,beginnerChecks);
+  const last=beginner?.lastAnswer,format=value=>value>0?'+1':value<0?'−1':'0';
+  $('beginnerFeedback').classList.toggle('correct',Boolean(last?.correct));
+  $('beginnerFeedback').classList.toggle('wrong',Boolean(last&&!last.correct));
+  $('beginnerFeedback').innerHTML=last?'<strong>Previous card: '+rank(last.card)+' → '+format(last.expected)+
+    '. '+(last.correct?'Correct!':'You chose '+format(last.guess)+'.')+'</strong><p>'+
+    (last.expected===1?'2–6 are low cards: add one.':last.expected===-1?'10, J, Q, K and A are high cards: subtract one.':'7–9 are neutral: the count stays the same.')+
+    ' Running count: '+last.before+' → '+last.after+'.'+(beginner.complete?' Start a fresh deck to practise again.':' Now answer the new card above.')+'</p>':
+    '<strong>↑ +1 · ↓ −1 · ← or → 0</strong><p>Press an arrow key or click a value. Suit does not affect the count.</p>';
+}
+const lessonTitles=['What are you counting?','Three card groups','Watch the count move','Your turn to count'];
+const lessonExample=[{label:'5',value:5},{label:'K',value:10},{label:'8',value:8},{label:'2',value:2}];
+const lessonPracticeCards=[4,10,8,6,1,3];
+let lessonStep=0,lessonExampleSeen=0,lessonPracticeIndex=0,lessonPracticeCount=0,
+  lessonPracticeAnswered=false,lessonPracticeFinished=false,lessonPracticeMessage='';
+function lessonCard(label){return '<div class="card" aria-label="'+label+'"><span class="corner">'+label+'</span><span class="pip">◆</span><span class="bottom">'+label+'</span></div>'}
+function renderLessonExample(){const seen=lessonExample.slice(0,lessonExampleSeen),last=seen[seen.length-1];
+  $('lessonExampleCard').innerHTML=last?lessonCard(last.label):cardHTML(0,true);
+  $('lessonExampleCount').textContent=String(countSequence(seen.map(c=>c.value)));
+  $('lessonExampleExplanation').textContent=last?last.label+' is '+(hiLo(last.value)>0?'+1':hiLo(last.value)<0?'−1':'0')+'. '+(hiLo(last.value)>0?'Add one.':hiLo(last.value)<0?'Subtract one.':'Keep the count the same.'):'No cards revealed yet.';
+  let total=0;$('lessonExampleTrail').innerHTML=seen.map(c=>{total+=hiLo(c.value);return '<span>'+c.label+' → '+total+'</span>'}).join('');
+  $('lessonReveal').textContent=lessonExampleSeen===lessonExample.length?'Start again':'Reveal next card'}
+function renderLessonPractice(){const card=lessonPracticeCards[lessonPracticeIndex],value=hiLo(card);
+  $('lessonPracticeCard').innerHTML=lessonCard(rank(card));
+  $('lessonPracticeProgress').textContent='Card '+(lessonPracticeIndex+1)+' of '+lessonPracticeCards.length;
+  $('lessonPracticeContext').textContent='Previous count: '+(lessonPracticeCount-(lessonPracticeAnswered?value:0));
+  $('lessonPracticeFeedback').textContent=lessonPracticeMessage;
+  $('lessonPracticeForm').classList.toggle('hidden',lessonPracticeFinished);
+  $('lessonPracticeFinish').classList.toggle('hidden',!lessonPracticeFinished);
+  $('lessonPracticeGuess').disabled=lessonPracticeAnswered||lessonPracticeFinished;
+  $('lessonPracticeCheck').disabled=lessonPracticeAnswered||lessonPracticeFinished;
+  $('lessonPracticeNext').disabled=!lessonPracticeAnswered;
+  $('lessonPracticeNext').textContent=lessonPracticeIndex===lessonPracticeCards.length-1?'Finish':'Next card'}
+function renderLesson(){document.querySelectorAll('[data-lesson-step]').forEach(el=>el.classList.toggle('hidden',Number(el.dataset.lessonStep)!==lessonStep));
+  $('lessonStepLabel').textContent='Step '+(lessonStep+1)+' of 4';$('lessonTitle').textContent=lessonTitles[lessonStep];
+  [...$('lessonDots').children].forEach((dot,index)=>dot.classList.toggle('active',index===lessonStep));
+  $('lessonBack').disabled=lessonStep===0;$('lessonForward').classList.toggle('hidden',lessonStep===3);
+  renderLessonExample();renderLessonPractice()}
+function checkLessonPractice(event){event.preventDefault();if(lessonPracticeAnswered||lessonPracticeFinished)return;
+  const input=$('lessonPracticeGuess');if(input.value===''||!input.checkValidity())return;
+  const card=lessonPracticeCards[lessonPracticeIndex],before=lessonPracticeCount,change=hiLo(card),answer=before+change;
+  const correct=Number(input.value)===answer;
+  lessonPracticeMessage=(correct?'Correct! ':'Not quite. ')+rank(card)+' is '+(change>0?'+1':change<0?'−1':'0')+'; '+before+' '+(change<0?'− 1':change>0?'+ 1':'+ 0')+' = '+answer+'.';
+  lessonPracticeCount=answer;lessonPracticeAnswered=true;renderLessonPractice()}
+function nextLessonPractice(){if(!lessonPracticeAnswered)return;
+  if(lessonPracticeIndex===lessonPracticeCards.length-1){lessonPracticeFinished=true;lessonPracticeMessage='Final running count: '+lessonPracticeCount+'.'}
+  else{lessonPracticeIndex++;lessonPracticeAnswered=false;lessonPracticeMessage='';$('lessonPracticeGuess').value=''}
+  renderLessonPractice();if(!lessonPracticeFinished)$('lessonPracticeGuess').focus()}
+function restartLessonPractice(){lessonPracticeIndex=0;lessonPracticeCount=0;lessonPracticeAnswered=false;lessonPracticeFinished=false;lessonPracticeMessage='';$('lessonPracticeGuess').value='';renderLessonPractice();$('lessonPracticeGuess').focus()}
+function openSettings(){const r=game.pendingRules||game.rules,f=$('settingsForm');
+  for(const [key,value] of Object.entries(r)){const input=f.elements.namedItem(key);if(!input)continue;if(input.type==='checkbox')input.checked=value;else input.value=String(value)}
+  $('settingsModal').classList.add('open');$('settingsClose').focus()}
+function closeSettings(){$('settingsModal').classList.remove('open');$('settingsOpen').focus()}
+function readSettings(){const f=$('settingsForm'),g=n=>f.elements.namedItem(n),number=n=>Number(g(n).value);return {
+  decks:number('decks'),soft17:g('soft17').value==='true',payout:number('payout'),das:g('das').checked,
+  doubleRule:g('doubleRule').value,resplitAces:g('resplitAces').checked,maxHands:number('maxHands'),
+  peek:g('peek').checked,penetration:number('penetration'),
+  startingBankroll:number('startingBankroll'),minBet:number('minBet'),maxBet:number('maxBet')}}
+function saveSettings(e){e.preventDefault();const r=readSettings();if(r.minBet>r.maxBet){alert('Minimum bet must not exceed maximum bet.');return}
+  apply({type:'rules',rules:r});closeSettings()}
+function deal(){if(!['betting','settled'].includes(game.phase))return;
+  const nextRules=game.pendingRules||game.rules,amount=Number($('betInput').value);
+  if(!Number.isFinite(amount)||amount<nextRules.minBet||amount>nextRules.maxBet){
+    game.message='Bet must be between '+money(nextRules.minBet)+' and '+money(nextRules.maxBet)+'.';render();return}
+  const config=readSideBets();
+  if(SIDE_BET_IDS.some(id=>!Number.isFinite(config.bets[id])||config.bets[id]<0||config.bets[id]>nextRules.maxBet)){
+    game.message='Each side bet must be between £0 and '+money(nextRules.maxBet)+'.';render();return;
+  }
+  game=reduceGame(game,{type:'sideBets',...config});
+  game=reduceGame(game,{type:'bet',amount});
+  apply({type:'deal',shoe:game.needsShuffle||game.position>=Math.floor(game.shoe.length*game.rules.penetration)?freshShoe(nextRules):undefined});
+  $('countResult').textContent='';lastCheckKey='';
+}
+function doAction(action){if(legalActions(game).includes(action))apply({type:'action',action})}
+function checkLive(){const input=$('countGuess');if(input.value==='')return;const guess=Number(input.value);
+  const key=game.shoe.length+':'+game.position+':'+game.runningCount;
+  if(key===lastCheckKey){$('countResult').textContent='Deal more cards before the next check.';return}
+  lastCheckKey=key;liveChecks++;const correct=guess===game.runningCount;if(correct)liveCorrect++;
+  $('countResult').textContent=(correct?'Correct.':'Not quite.')+' Actual count: '+game.runningCount+'.';input.value='';render()}
+function clearDrillTimer(){if(drillTimer!==null){clearTimeout(drillTimer);drillTimer=null}}
+function resetSessionStats(){
+  session=newSession(game.bankroll);lastRecordedRoundId=game.round?game.round.id:0;coachRoundId=0;
+  trainingPractice=new Map();trainingCurrentKey=null;trainingFilter=null;trainingAnswered=false;trainingSelected=null;
+  liveCorrect=0;liveChecks=0;lastCheckKey='';drillCorrect=0;drillChecks=0;drillStreak=0;
+  beginner=null;beginnerChecks=0;beginnerCorrect=0;renderBeginner();
+  clearDrillTimer();drill=null;
+  $('countResult').textContent='';$('drillFeedback').textContent='';
+  $('drillStreak').textContent='0';$('drillAccuracy').textContent='0/0';
+  $('drillStage').innerHTML='<div><div class="big">Ready?</div><div class="drill-progress">Choose your pace and start.</div></div>';
+  $('drillGuess').disabled=true;$('submitDrill').disabled=true;
+  $('startDrill').textContent='Start drill';render();
+}
+function resetFullSession(){
+  const rules=game.pendingRules||game.rules,profiles=game.sideProfiles;
+  if(!window.confirm('Reset the full session? This discards the current hand, restores the bankroll to '+
+    money(rules.startingBankroll)+', reshuffles the shoe, and clears statistics and training progress. Rule settings stay saved.'))return;
+  game=newGame(rules,freshShoe(rules));game.sideProfiles=profiles;lastVisual.roundId=-1;
+  resetSideRecall();
+  $('countGuess').value='';$('drillGuess').value='';$('lessonPracticeGuess').value='';
+  lessonStep=0;lessonExampleSeen=0;lessonPracticeIndex=0;lessonPracticeCount=0;
+  lessonPracticeAnswered=false;lessonPracticeFinished=false;lessonPracticeMessage='';
+  persist();resetSessionStats();renderLesson();switchTab('play');
+}
+function startDrill(){clearDrillTimer();const length=Number($('drillLength').value),group=Number($('drillGroup').value),speed=Number($('drillSpeed').value);
+  drill={cards:freshShoe({...game.rules,decks:Math.max(1,game.rules.decks)}).slice(0,length),shown:0,count:0,group,speed,phase:'running'};
+  $('drillGuess').value='';$('drillGuess').disabled=true;$('submitDrill').disabled=true;$('drillFeedback').textContent='';$('startDrill').textContent='Restart drill';tickDrill()}
+function tickDrill(){if(!drill||drill.phase!=='running')return;
+  if(drill.shown>=drill.cards.length){drill.phase='answer';$('drillStage').innerHTML='<div><div class="big">Your count?</div><div class="drill-progress">'+drill.cards.length+' cards shown</div></div>';
+    $('drillGuess').disabled=false;$('submitDrill').disabled=false;$('drillGuess').focus();return}
+  const batch=drill.cards.slice(drill.shown,drill.shown+drill.group);drill.shown+=batch.length;drill.count+=countSequence(batch);
+  $('drillStage').innerHTML='<div><div class="cards">'+batch.map(c=>cardHTML(c)).join('')+'</div><div class="drill-progress">'+drill.shown+' / '+drill.cards.length+' cards'+($('showDrillCount').checked?' · Running count '+drill.count:'')+'</div></div>';
+  drillTimer=setTimeout(tickDrill,drill.speed)}
+function submitDrill(){if(!drill||drill.phase!=='answer'||$('drillGuess').value==='')return;
+  const correct=Number($('drillGuess').value)===drill.count;drillChecks++;
+  if(correct){drillCorrect++;drillStreak++}else drillStreak=0;
+  $('drillFeedback').textContent=(correct?'Correct!':'Incorrect.')+' Count: '+drill.count+'.';
+  $('drillStreak').textContent=String(drillStreak);$('drillAccuracy').textContent=drillCorrect+'/'+drillChecks;
+  $('drillGuess').disabled=true;$('submitDrill').disabled=true;drill.phase='done'}
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+document.querySelectorAll('[data-trainer]').forEach(b=>b.addEventListener('click',()=>switchTrainer(b.dataset.trainer)));
+$('multiCreate').addEventListener('click',multiCreate);$('multiJoin').addEventListener('click',multiJoin);
+$('multiPlaceBet').addEventListener('click',()=>{const amount=Number($('multiBetInput').value);if(Number.isFinite(amount))multiSend('bet',{amount})});
+$('multiStart').addEventListener('click',()=>multiSend('start'));
+$('multiLeave').addEventListener('click',multiDisconnect);
+$('multiCopy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(multi.code);$('multiStatus').textContent='Room code copied.'}catch{$('multiStatus').textContent='Room code: '+multi.code}});
+document.querySelectorAll('#multiControls button').forEach(button=>button.addEventListener('click',()=>multiSend('action',{action:button.dataset.multiAction})));
+$('multiRoomInput').addEventListener('keydown',event=>{if(event.key==='Enter')multiJoin()});$('multiName').addEventListener('keydown',event=>{if(event.key==='Enter')multiCreate()});
+for(const id of SIDE_BET_IDS){const prefix=sideUI[id];
+  $(prefix+'Toggle').addEventListener('click',()=>toggleSideBet(id));
+  $(prefix+'Stake').addEventListener('input',renderSideBets);$(prefix+'Stake').addEventListener('change',syncSideBets);
+  $(prefix+'Profile').addEventListener('change',syncSideBets);
+}
+$('betInput').addEventListener('input',renderSideBets);
+$('clearSideBets').addEventListener('click',clearSideBets);
+$('beginnerStart').addEventListener('click',startBeginner);
+$('beginnerDecks').addEventListener('change',()=>{const value=Number($('beginnerDecks').value);
+  if(beginnerDeckChoices.includes(value))storage.write('blackjack.beginnerDecks.v1',String(value))});
+document.querySelectorAll('[data-beginner-value]').forEach(button=>button.addEventListener('click',()=>answerBeginner(Number(button.dataset.beginnerValue))));
+$('trainingGoPlay').addEventListener('click',()=>switchTab('play'));
+$('trainingNext').addEventListener('click',nextTrainingQuestion);
+$('trainingAll').addEventListener('click',()=>startTraining());
+$('trainingChoices').addEventListener('click',e=>{const button=e.target.closest('[data-train-action]');if(button)answerTraining(button.dataset.trainAction)});
+$('trainingPatterns').addEventListener('click',e=>{const button=e.target.closest('[data-pattern-index]');if(!button)return;
+  const pattern=analyzeTraining(session.handHistory).patterns[Number(button.dataset.patternIndex)];if(pattern)startTraining(pattern.key)});
+$('reviewSteps').addEventListener('click',e=>{if(!e.target.closest('[data-train-review]'))return;
+  const misses=game.round?.review.filter(item=>!decisionOptimal(item))||[];if(!misses.length)return;
+  trainingFilter=null;trainingCurrentKey=trainingScenarioKey(misses[misses.length-1]);
+  trainingAnswered=false;trainingSelected=null;switchTab('training')});
+$('lessonBack').addEventListener('click',()=>{if(lessonStep>0){lessonStep--;renderLesson()}});
+$('lessonForward').addEventListener('click',()=>{if(lessonStep<3){lessonStep++;renderLesson()}});
+$('lessonReveal').addEventListener('click',()=>{lessonExampleSeen=lessonExampleSeen===lessonExample.length?0:lessonExampleSeen+1;renderLessonExample()});
+$('lessonPracticeForm').addEventListener('submit',checkLessonPractice);
+$('lessonPracticeNext').addEventListener('click',nextLessonPractice);
+$('lessonRestart').addEventListener('click',restartLessonPractice);
+$('lessonGoLive').addEventListener('click',()=>switchTrainer('live'));
+$('lessonGoDrill').addEventListener('click',()=>switchTrainer('drill'));
+document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>doAction(b.dataset.action)));
+$('dealBtn').addEventListener('click',deal);$('betInput').addEventListener('change',()=>{if(['betting','settled'].includes(game.phase))apply({type:'bet',amount:Number($('betInput').value)})});
+$('takeInsurance').addEventListener('click',()=>apply({type:'insurance',take:true}));
+$('declineInsurance').addEventListener('click',()=>apply({type:'insurance',take:false}));
+$('takeInsurance').setAttribute('aria-keyshortcuts','A');
+$('declineInsurance').setAttribute('aria-keyshortcuts','D');
+$('resetSession').addEventListener('click',resetFullSession);
+$('settingsOpen').addEventListener('click',openSettings);$('settingsClose').addEventListener('click',closeSettings);
+$('settingsModal').addEventListener('click',e=>{if(e.target===$('settingsModal'))closeSettings()});
+$('settingsForm').addEventListener('submit',saveSettings);
+$('resetBankroll').addEventListener('click',()=>{const r=readSettings();if(r.minBet>r.maxBet)return;
+  const profiles=game.sideProfiles;game=newGame(r,freshShoe(r));game.sideProfiles=profiles;lastVisual.roundId=-1;resetSideRecall();persist();closeSettings();resetSessionStats()});
+$('resetStats').addEventListener('click',()=>{if(['betting','settled'].includes(game.phase))resetSessionStats()});
+$('coachSeeStats').addEventListener('click',()=>switchTab('stats'));
+$('showLiveCount').addEventListener('change',render);$('checkCount').addEventListener('click',checkLive);
+$('countGuess').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();checkLive()}});
+$('startDrill').addEventListener('click',startDrill);$('submitDrill').addEventListener('click',submitDrill);
+$('drillGuess').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submitDrill()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('settingsModal').classList.contains('open')){closeSettings();return}
+  if($('settingsModal').classList.contains('open')||e.altKey||e.ctrlKey||e.metaKey)return;
+  if(tab==='trainer'&&trainerMode==='beginner'){
+    if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;
+    const value=beginnerShortcut(e.key);
+    if(value!==null&&beginner&&!beginner.complete){e.preventDefault();if(!e.repeat)answerBeginner(value)}
+    return;
+  }
+  const key=e.key.toLowerCase(),map={h:'hit',s:'stand',d:'double',p:'split'};
+  if(tab==='training'){
+    const current=analyzeTraining(session.handHistory).scenarios.find(s=>s.key===trainingCurrentKey);
+    const insuranceChoice=current?.example.kind==='insurance'?insuranceShortcut(key,'insurance'):null;
+    if(insuranceChoice!==null){e.preventDefault();answerTraining(insuranceChoice?'takeInsurance':'declineInsurance')}
+    else if(map[key]){e.preventDefault();answerTraining(map[key])}
+    else if(key==='n'&&trainingAnswered){e.preventDefault();nextTrainingQuestion()}
+    return;
+  }
+  if(tab==='multi'){
+    if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;
+    const multiMap={h:'hit',s:'stand',d:'double',p:'split'};
+    if(multiMap[key]){e.preventDefault();multiSend('action',{action:multiMap[key]})}
+    return;
+  }
+  if(tab==='stats'||tab==='trainer'&&trainerMode!=='live')return;
+  if(sideKeys[key]||key==='x'){
+    if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)||document.activeElement.isContentEditable)return;
+    if(!['betting','settled'].includes(game.phase))return;
+    e.preventDefault();if(e.repeat)return;
+    if(key==='x')clearSideBets();else toggleSideBet(sideKeys[key]);return;
+  }
+  const insuranceChoice=insuranceShortcut(key,game.phase);
+  if(insuranceChoice!==null&&
+    (!['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)||document.activeElement===$('betInput'))){
+    e.preventDefault();apply({type:'insurance',take:insuranceChoice});return}
+  if(key==='n'&&(document.activeElement===$('betInput')||SIDE_BET_IDS.some(id=>document.activeElement===$(sideUI[id]+'Stake')))){
+    e.preventDefault();if(!e.repeat)deal();return;
+  }
+  if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;
+  if(map[key]){e.preventDefault();doAction(map[key])}if(key==='n'){e.preventDefault();deal()}});
+moveSurface();render();renderLesson();renderBeginner();
+})();
+</script>
+</body>
+</html>
+
+
