@@ -1,5 +1,13 @@
 const RULES = Object.freeze({ decks: 6, soft17: false, minBet: 10, maxBet: 500, maxPlayers: 6, maxHands: 4 });
 const ROOM_CODE = /^[A-Z0-9]{4,8}$/;
+const SIDE_BETS = Object.freeze({
+  perfectPairs: { name: 'Perfect Pairs', cards: 2, profiles: { standard: { label: '25 / 15 / 5', pays: { perfect: 25, colored: 15, mixed: 5 } } } },
+  twentyOneThree: { name: '21+3', cards: 3, profiles: { standard: { label: '9:1 winning hands', pays: { suitedTrips: 9, straightFlush: 9, trips: 9, straight: 9, flush: 9 } } } },
+  luckyLucky: { name: 'Lucky Lucky', cards: 3, profiles: { standard: { label: '200 / 100 / 50 / 30 / 15 / 3 / 2 / 2', pays: { suited777: 200, suited678: 100, triple777: 50, run678: 30, suited21: 15, total21: 3, total20: 2, total19: 2 } } } }
+});
+const SIDE_BET_IDS = Object.keys(SIDE_BETS);
+const emptySideBets = () => Object.fromEntries(SIDE_BET_IDS.map(id => [id, 0]));
+const emptySideProfiles = () => Object.fromEntries(SIDE_BET_IDS.map(id => [id, 'standard']));
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
@@ -13,6 +21,32 @@ function handValue(cards) {
   while (aces > 0 && total + 10 <= 21) { total += 10; aces--; soft = true; }
   return { total, soft, blackjack: cards.length === 2 && total === 21 };
 }
+function sideBetCategory(id, cards) {
+  const ranks = cards.map(card => rankOf(card)).sort((a, b) => a - b), suited = cards.every(card => card.suit === cards[0].suit);
+  if (id === 'perfectPairs') {
+    if (ranks[0] !== ranks[1]) return 'lose';
+    if (suited) return 'perfect';
+    const red = card => card.suit === 1 || card.suit === 2;
+    return red(cards[0]) === red(cards[1]) ? 'colored' : 'mixed';
+  }
+  if (id === 'twentyOneThree') {
+    const trips = ranks[0] === ranks[2], straight = ranks[1] === ranks[0] + 1 && ranks[2] === ranks[1] + 1 || ranks[0] === 1 && ranks[1] === 12 && ranks[2] === 13;
+    if (trips) return suited ? 'suitedTrips' : 'trips';
+    if (straight) return suited ? 'straightFlush' : 'straight';
+    return suited ? 'flush' : 'lose';
+  }
+  const total = handValue(cards).total;
+  if (ranks.every(rank => rank === 7)) return suited ? 'suited777' : 'triple777';
+  if (ranks.join(',') === '6,7,8') return suited ? 'suited678' : 'run678';
+  if (total === 21) return suited ? 'suited21' : 'total21';
+  return total === 20 ? 'total20' : total === 19 ? 'total19' : 'lose';
+}
+function sideBetResult(id, profile, stake, cards) {
+  const schedule = SIDE_BETS[id].profiles[profile] || SIDE_BETS[id].profiles.standard, category = sideBetCategory(id, cards), odds = schedule.pays[category] ?? -1;
+  const paid = odds < 0 ? 0 : Math.round(stake * (odds + 1) * 100) / 100;
+  return { id, profile, stake, category, odds, paid, net: Math.round((paid - stake) * 100) / 100 };
+}
+function totalWager(player) { return Math.round((player.bet + SIDE_BET_IDS.reduce((sum, id) => sum + (player.sideBets?.[id] || 0), 0)) * 100) / 100; }
 function cardLabel(card) {
   if (!card) return 'hidden';
   return (['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'][card.rank - 1] || '?') + ['♠', '♥', '♦', '♣'][card.suit];
@@ -29,7 +63,7 @@ function makeShoe(decks) {
   return shoe;
 }
 function emptyPlayer(id, name) {
-  return { id, name, connected: true, bankroll: 1000, bet: 0, hands: [], activeHand: 0, result: '', ready: false };
+  return { id, name, connected: true, bankroll: 1000, bet: 0, sideBets: emptySideBets(), sideProfiles: emptySideProfiles(), sideResults: [], originalCards: [], hands: [], activeHand: 0, result: '', ready: false };
 }
 function emptyState(code) {
   return { code, phase: 'waiting', hostId: '', players: [], dealer: [], dealerRevealed: false,
@@ -42,8 +76,8 @@ function publicState(state) {
     dealerRevealed: state.dealerRevealed, position: state.position, shoeSize: state.shoe.length,
     activePlayer: state.activePlayer, hostId: state.hostId, rules: state.rules,
     players: state.players.map(player => ({ id: player.id, name: player.name, connected: player.connected,
-      bankroll: player.bankroll, bet: player.bet, hands: player.hands.map(hand => ({ ...hand, cards: [...hand.cards] })),
-      activeHand: player.activeHand, result: player.result, ready: player.ready }))
+      bankroll: player.bankroll, bet: player.bet, sideBets: { ...player.sideBets }, sideProfiles: { ...player.sideProfiles }, sideResults: player.sideResults.map(result => ({ ...result })),
+      hands: player.hands.map(hand => ({ ...hand, cards: [...hand.cards] })), activeHand: player.activeHand, result: player.result, ready: player.ready }))
   };
 }
 function currentPlayer(state) { return state.players[state.activePlayer]; }
@@ -109,6 +143,12 @@ function settle(state) {
       roundNet += returned - hand.wager;
       hand.result = value.total > 21 ? 'Bust' : dealerBJ ? (natural ? 'Push' : 'Dealer blackjack') : natural ? 'Blackjack' : dealer.total > 21 || value.total > dealer.total ? 'Win' : value.total === dealer.total ? 'Push' : 'Lose';
     }
+    player.sideResults = [];
+    if (player.hands.length) for (const id of SIDE_BET_IDS) if (player.sideBets[id] > 0) {
+      const cards = [...player.originalCards, state.dealer[0]];
+      const result = sideBetResult(id, player.sideProfiles[id], player.sideBets[id], cards.slice(0, SIDE_BETS[id].cards));
+      player.sideResults.push(result); player.bankroll = Math.round((player.bankroll + result.paid) * 100) / 100; roundNet += result.net;
+    }
     player.result = roundNet > 0 ? 'Win' : roundNet < 0 ? 'Lose' : 'Push';
   }
   state.phase = 'settled'; state.message = 'Round complete. Place the next bets.';
@@ -116,12 +156,12 @@ function settle(state) {
 function startRound(state) {
   if (state.players.length === 0) { state.message = 'At least one player must join.'; return; }
   const seated = state.players.filter(player => player.connected);
-  const eligible = seated.filter(player => player.bet >= state.rules.minBet && player.bet <= state.rules.maxBet && player.bankroll >= player.bet);
+  const eligible = seated.filter(player => player.bet >= state.rules.minBet && player.bet <= state.rules.maxBet && player.bankroll >= totalWager(player));
   if (!seated.length) { state.message = 'At least one connected player must join.'; return; }
-  if (eligible.length !== seated.length) { state.message = `Everyone at the table must place a valid bet between £${state.rules.minBet} and £${state.rules.maxBet} before the host deals.`; return; }
-  for (const player of state.players) { player.hands = []; player.activeHand = 0; player.result = ''; player.ready = false; }
+  if (eligible.length !== seated.length) { state.message = `Everyone at the table must place a valid main bet and have enough chips for their side bets before the host deals.`; return; }
+  for (const player of state.players) { player.hands = []; player.originalCards = []; player.activeHand = 0; player.result = ''; player.sideResults = []; player.ready = false; }
   for (const player of seated) {
-    player.bankroll -= player.bet;
+    player.bankroll -= totalWager(player);
     player.hands = [makeHand([], player.bet)];
   }
   state.dealer = []; state.dealerRevealed = false; state.round++; state.phase = 'playing'; state.activePlayer = 0;
@@ -131,6 +171,7 @@ function startRound(state) {
   state.dealer.push(draw(state));
   for (const player of seated) {
     const value = handValue(player.hands[0].cards); if (value.total >= 21) player.hands[0].done = true;
+    player.originalCards = [...player.hands[0].cards];
   }
   if (handValue(state.dealer).blackjack) playDealer(state);
   else { advanceTurn(state); if (state.phase === 'playing') state.message = `${currentPlayer(state).name}'s turn.`; }
@@ -154,7 +195,10 @@ function handleAction(state, player, action) {
 
 export class BlackjackRoom {
   constructor(state, env) { this.state = state; this.env = env; this.sockets = new Map(); this.ready = this.load(); }
-  async load() { this.game = await this.state.storage.get('game') || emptyState(this.state.id.toString().slice(-8).toUpperCase()); }
+  async load() {
+    this.game = await this.state.storage.get('game') || emptyState(this.state.id.toString().slice(-8).toUpperCase());
+    for (const player of this.game.players) { player.sideBets = { ...emptySideBets(), ...(player.sideBets || {}) }; player.sideProfiles = { ...emptySideProfiles(), ...(player.sideProfiles || {}) }; player.sideResults = player.sideResults || []; player.originalCards = player.originalCards || []; }
+  }
   async persist() { await this.state.storage.put('game', this.game); }
   send(socket, playerId) { socket.send(JSON.stringify({ type: 'state', selfId: playerId, state: publicState(this.game), legalActions: legalActions(this.game, this.game.players.find(player => player.id === playerId)) })); }
   broadcast() { for (const [socket, playerId] of this.sockets) if (socket.readyState === 1) this.send(socket, playerId); }
@@ -185,7 +229,12 @@ export class BlackjackRoom {
       const player = this.game.players.find(item => item.id === playerId);
       if (!player) return;
       if (type === 'bet' && ['waiting', 'betting', 'settled'].includes(this.game.phase)) {
-        const amount = Number(event.amount); if (Number.isFinite(amount) && amount >= this.game.rules.minBet && amount <= this.game.rules.maxBet) player.bet = Math.round(amount * 100) / 100;
+        const amount = Number(event.amount); if (Number.isFinite(amount) && amount >= this.game.rules.minBet && amount <= this.game.rules.maxBet && amount + SIDE_BET_IDS.reduce((sum, id) => sum + player.sideBets[id], 0) <= player.bankroll) { player.bet = Math.round(amount * 100) / 100; player.ready = true; this.game.message = `${player.name} updated their main bet.`; } else socket.send(JSON.stringify({ type: 'error', message: `Your main bet must be between £${this.game.rules.minBet} and £${this.game.rules.maxBet}, with enough chips for your side bets.` }));
+      } else if (type === 'sideBet' && ['waiting', 'betting', 'settled'].includes(this.game.phase)) {
+        const id = String(event.id), amount = Number(event.amount), profile = String(event.profile || 'standard');
+        const valid = SIDE_BET_IDS.includes(id) && Number.isFinite(amount) && amount >= 0 && amount <= this.game.rules.maxBet && Object.hasOwn(SIDE_BETS[id].profiles, profile);
+        if (!valid || player.bet + SIDE_BET_IDS.reduce((sum, key) => sum + (key === id ? amount : player.sideBets[key]), 0) > player.bankroll) socket.send(JSON.stringify({ type: 'error', message: 'That side-bet amount is invalid or exceeds your available chips.' }));
+        else { player.sideBets[id] = Math.round(amount * 100) / 100; player.sideProfiles[id] = profile; this.game.message = `${player.name} updated their side bets.`; }
       } else if (type === 'start' && player.id === this.game.hostId && ['waiting', 'betting', 'settled'].includes(this.game.phase)) startRound(this.game);
       else if (type === 'action') handleAction(this.game, player, String(event.action));
       else if (type === 'reset' && player.id === this.game.hostId) { this.game = emptyState(this.game.code); this.game.hostId = player.id; this.game.players = [emptyPlayer(player.id, player.name)]; }
@@ -204,7 +253,10 @@ export default {
     const url = new URL(request.url);
     if (request.method === 'OPTIONS') return new Response('', { headers: { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET,POST,OPTIONS', 'access-control-allow-headers': 'content-type' } });
     if (url.pathname === '/create' && request.method === 'POST') {
-      const code = newCode(); env.ROOM.idFromName(code); return json({ code });
+      let requested = '';
+      try { requested = String((await request.json())?.code || '').trim().toUpperCase(); } catch { /* Empty body means generate a code. */ }
+      if (requested && !ROOM_CODE.test(requested)) return json({ error: 'Room codes must be 4–8 letters or numbers.' }, 400);
+      const code = requested || newCode(); env.ROOM.idFromName(code); return json({ code });
     }
     const match = url.pathname.match(/^\/room\/([A-Z0-9]{4,8})$/i);
     if (match) {
